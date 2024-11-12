@@ -65,19 +65,25 @@ class Acrome_Device():
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
         
         #burayi kontrol et.
-        self.__write_bus(struct_out)
-        if self.__read_ack(id):
-            return True
-        
+        try:     
+            self.__write_bus(struct_out)
+            if self.__read_ack(id):
+                return True
+        except:
+            print("port error.....")
+    
     def read_var(self, *indexes):
         fmt_str = '<BBBB'+'B'*len(indexes)
         struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, len(indexes) + 8, Device_Commands.READ, *indexes]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
         
-        #burayi kontrol et.
-        self.__write_bus(struct_out)
-        if self.__read_ack(id):
-            return True
+        #burasi kontrol edilmeli.
+        try:     
+            self.__write_bus(struct_out)
+            if self.__read_ack(id):
+                return True
+        except:
+            print("port error.....")
         
     def write_var(self, *idx_val_pairs):
         # bu write_ack nasil calisiyor ogrenmeyi unutma.
@@ -102,27 +108,35 @@ class Acrome_Device():
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
 
         #burayi kontrol et.
-        self.__write_bus(struct_out)
-        if self.__read_ack(id):
-            return True
+        try:     
+            self.__write_bus(struct_out)
+            if self.__read_ack(id):
+                return True
+        except:
+            print("port error.....")
     
-    def _reboot(self):
-        self.vars[Index.Command].value(Commands.REBOOT)
-        fmt_str = '<' + ''.join([var.type() for var in self.vars[:4]])
-        struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.vars[:4]]))
-        struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
-        self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
-        self.__ack_size = 0
-        return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+    def reboot(self):
+        fmt_str = '<BBBB'
+        struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.REBOOT]))
+        struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))    
+        try:     
+            self.__write_bus(struct_out)
+        except:
+            print("port error.....")
 	
-    def _eeprom_write():
-        self.vars[Index.Command].value(Commands.EEPROM_WRITE_ACK if ack else Commands.EEPROM_WRITE)
-        fmt_str = '<' + ''.join([var.type() for var in self.vars[:4]])
-        struct_out = list(struct.pack(fmt_str, *[var.value() for var in self.vars[:4]]))
-        struct_out[int(Index.PackageSize)] = len(struct_out) + self.vars[Index.CRCValue].size()
-        self.vars[Index.CRCValue].value(CRC32.calc(struct_out))
-        self.__ack_size = struct.calcsize(fmt_str + self.vars[Index.CRCValue].type())
-        return bytes(struct_out) + struct.pack('<' + self.vars[Index.CRCValue].type(), self.vars[Index.CRCValue].value())
+    def eeprom_save(self):
+        fmt_str = '<BBBB'
+        struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.EEPROM_WRITE]))
+        struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
+        return struct_out
+        
+        #burayi kontrol et.
+        try:     
+            self.__write_bus(struct_out)
+            if self.__read_ack(id):
+                return True
+        except:
+            print("port error.....")
 
     def _bootloader_jump():
         pass
