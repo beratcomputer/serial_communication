@@ -20,7 +20,6 @@ class Device_Commands(enum.IntEnum):
 
 class Acrome_Device():
     _BATCH_ID = 254
-
     def __init__(self, header, id, variables, portname, baudrate=3000000):
         if baudrate > 9500000 or baudrate < 1200:
             raise ValueError("Baudrate must be in range of 1200 to 9.5M")
@@ -29,12 +28,12 @@ class Acrome_Device():
                 self.__baudrate = baudrate
                 self.__post_sleep = 0
                 self.__ph = serial.Serial(port=portname, baudrate=self.__baudrate, timeout=0.1)
-            except:
-                #raise ValueError
-                print("port acilamadi")
+            except Exception as e:
+                print(f"error: {e}")
         self.__header = header
         self.__id = id
         self._vars = variables
+        self._ack_size = 0
 
     
     def __write_bus(self, data):
@@ -44,15 +43,17 @@ class Acrome_Device():
         self.__ph.flushInput()
         return self.__ph.read(size=size)
     
-    def __read_ack(self, id) -> bool:
-        ret = self.__read_bus(self.__driver_list[id].get_ack_size())
-        if len(ret) == self.__driver_list[id].get_ack_size():
+    def __read_ack(self) -> bool:
+        ret = self.__read_bus(self._ack_size)
+        if len(ret) == self._ack_size:
             if (CRC32.calc(ret[:-4]) == struct.unpack('<I', ret[-4:])[0]):
-                if ret[int(Index.PackageSize)] > 8:
-                    self.parse_received(ret)
+                if ret[2] > 8:
+                    #buranin yapilmasi gerekiyor
+                    print("parse daha yazilmadi.")
+                    #self.parse_received(ret)
                     return True
                 else:
-                    return True
+                    return True # ping islemi icin.
             else:
                 return False
         else:
@@ -62,29 +63,30 @@ class Acrome_Device():
     def ping(self):
         fmt_str = '<BBBB'
         struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.PING]))
-        struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-        
+        struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
+        self._ack_size = 8
         #burayi kontrol et.
-        try:     
-            self.__write_bus(struct_out)
-            if self.__read_ack(id):
-                return True
-        except:
-            print("port error.....")
+        self.__write_bus(struct_out)
+        
+        if self.__read_ack():
+            return True
+        else:
+            return False
     
     def read_var(self, *indexes):
+        self._ack_size = 0
         fmt_str = '<BBBB'+'B'*len(indexes)
         struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, len(indexes) + 8, Device_Commands.READ, *indexes]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-        
-        #burasi kontrol edilmeli.
-        try:     
-            self.__write_bus(struct_out)
-            if self.__read_ack(id):
-                return True
-        except:
-            print("port error.....")
-        
+        for i in indexes:
+            self._ack_size += (self._vars[int(i)].size() + 1)
+        self._ack_size += 8
+        self.__write_bus(struct_out)
+        if self.__read_ack():
+            return True
+        else:
+            return False
+
     def write_var(self, *idx_val_pairs):
         # bu write_ack nasil calisiyor ogrenmeyi unutma.
         # buraya bir yazilabilir mi kontrolu eklenebilir.
@@ -128,9 +130,10 @@ class Acrome_Device():
         fmt_str = '<BBBB'
         struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.EEPROM_WRITE]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-        return struct_out
-        
+        print(struct_out)
+        print(CRC32.calc(struct_out))
         #burayi kontrol et.
+        self.__write_bus(struct_out)
         try:     
             self.__write_bus(struct_out)
             if self.__read_ack(id):

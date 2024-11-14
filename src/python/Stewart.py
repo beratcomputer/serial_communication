@@ -11,7 +11,6 @@ STEWART_HEADER = 0x55
 Index_Stewart = enum.IntEnum('Index', [
 	'Header',
 	'DeviceID',
-	'DeviceFamily',
 	'PackageSize',
 	'Command',
 	'HardwareVersion',
@@ -98,7 +97,7 @@ class Stewart(Acrome_Device):
             Data_(Index_Stewart.SoftwareVersion, 'I'),
             Data_(Index_Stewart.Baudrate, 'I'),
 			Data_(Index_Stewart.Status, 'B'),
-			Data_(Index_Stewart.MotorSizes, 'f'),
+			Data_(Index_Stewart.MotorSizes, 'B'),
 			Data_(Index_Stewart.MotorMaxSpeeds,'f'),
 			Data_(Index_Stewart.MotorCPRs,'f'),
             Data_(Index_Stewart.DeviceLoopFrequency,'f'),
@@ -161,7 +160,7 @@ class Stewart(Acrome_Device):
             Data_(Index_Stewart.Motor5_Position,'f'),
             Data_(Index_Stewart.Motor6_Position,'f'),
             Data_(Index_Stewart.CRCValue, 'I'),
-        ]	
+        ]
 		super().__init__(STEWART_HEADER, ID, Datas_Stewart, port, baudrate)
 		self._vars[Index_Stewart.DeviceID].value(ID)
 
