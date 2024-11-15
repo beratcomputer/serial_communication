@@ -5,6 +5,17 @@ import time
 import serial
 import enum
 
+#Classical Device Indexes
+Index_Devices = enum.IntEnum('Index', [
+	'Header',
+	'DeviceID',
+	'PackageSize',
+	'Command',
+	'HardwareVersion',
+	'SoftwareVersion',
+], start=0)
+
+
 #Classical_Commands
 class Device_Commands(enum.IntEnum):
 	PING = 0x00,
@@ -43,15 +54,30 @@ class Acrome_Device():
         self.__ph.flushInput()
         return self.__ph.read(size=size)
     
+    def _parse_received(self, data):
+        id = data[Index_Devices.DeviceID]
+        data = data[4:-4]
+        fmt_str = '<'
+
+        i = 0
+        while i < len(data):
+            fmt_str += 'B' + self._vars[data[i]].type()
+            i += self._vars[data[i]].size() + 1
+
+        unpacked = list(struct.unpack(fmt_str, data))
+        grouped = zip(*(iter(unpacked),) * 2)
+        for group in grouped:
+            self._vars[group[0]].value(group[1])
+    
     def __read_ack(self) -> bool:
         ret = self.__read_bus(self._ack_size)
-        print(list(ret))
+        #print(list(ret))
         if len(ret) == self._ack_size:
             if (CRC32.calc(ret[:-4]) == struct.unpack('<I', ret[-4:])[0]):
                 if ret[2] > 8:
                     #print("parse daha yazilmadi.")
                     #print(list(ret))
-                    #self.parse_received(ret)
+                    self._parse_received(ret)
                     return True
                 else:
                     return True # ping islemi ve WRITE_ACK icin.
@@ -90,8 +116,7 @@ class Acrome_Device():
             return [None]
 
     def write_var(self, *idx_val_pairs):
-        # bu write_ack nasil calisiyor ogrenmeyi unutma.
-        # buraya bir yazilabilir mi kontrolu eklenebilir.
+        # returns : did ACK come?
         fmt_str = '<BBBB'
         var_count = 0
         size = 0

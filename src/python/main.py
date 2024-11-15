@@ -1,16 +1,14 @@
 from acrome_embedded_devices import *
 port = "COM11"
-baudrate = 115200
+baudrate = 921600 
 
 Stewart_0 = Stewart(0, port, baudrate)
 #Stewart_1 = Stewart(1, port, baudrate)
 count = 0
 a = time.time()
-while count<1000:
-    Stewart_0.write_var([Index_Stewart.MotorSizes, 2], [Index_Stewart.Offset_X, 2.6])
-    Stewart_0.read_var(Index_Stewart.MotorSizes, Index_Stewart.Offset_X)
-    count+=1
 
+
+#Stewart_0.write_var([Index_Stewart.MotorSizes, 2], [Index_Stewart.Offset_X, float(1000)])
 b = time.time()
 
 print(a)

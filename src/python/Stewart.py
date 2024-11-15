@@ -164,8 +164,10 @@ class Stewart(Acrome_Device):
 		super().__init__(STEWART_HEADER, ID, Datas_Stewart, port, baudrate)
 		self._vars[Index_Stewart.DeviceID].value(ID)
 
-	def get_ack_size(self):
-		return self.__ack_size
+	def calibrate(self):
+		pass
+
+	
 	
 
 
