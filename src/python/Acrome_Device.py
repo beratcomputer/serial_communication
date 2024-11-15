@@ -45,15 +45,16 @@ class Acrome_Device():
     
     def __read_ack(self) -> bool:
         ret = self.__read_bus(self._ack_size)
+        print(list(ret))
         if len(ret) == self._ack_size:
             if (CRC32.calc(ret[:-4]) == struct.unpack('<I', ret[-4:])[0]):
                 if ret[2] > 8:
-                    #buranin yapilmasi gerekiyor
-                    print("parse daha yazilmadi.")
+                    #print("parse daha yazilmadi.")
+                    #print(list(ret))
                     #self.parse_received(ret)
                     return True
                 else:
-                    return True # ping islemi icin.
+                    return True # ping islemi ve WRITE_ACK icin.
             else:
                 return False
         else:
@@ -82,10 +83,11 @@ class Acrome_Device():
             self._ack_size += (self._vars[int(i)].size() + 1)
         self._ack_size += 8
         self.__write_bus(struct_out)
+
         if self.__read_ack():
-            return True
+            return [self._vars[index].value() for index in indexes]
         else:
-            return False
+            return [None]
 
     def write_var(self, *idx_val_pairs):
         # bu write_ack nasil calisiyor ogrenmeyi unutma.
@@ -108,15 +110,13 @@ class Acrome_Device():
 
         struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, size + 8, Device_Commands.WRITE, *flattened_list]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-
-        #burayi kontrol et.
-        try:     
-            self.__write_bus(struct_out)
-            if self.__read_ack(id):
-                return True
-        except:
-            print("port error.....")
-    
+        self._ack_size = 8
+        self.__write_bus(struct_out)
+        if self.__read_ack():
+            return True
+        else:
+            return False
+        
     def reboot(self):
         fmt_str = '<BBBB'
         struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.REBOOT]))
