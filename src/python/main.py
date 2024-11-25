@@ -4,17 +4,13 @@ baudrate = 921600
 
 Stewart_0 = Stewart(0, port, baudrate)
 #Stewart_1 = Stewart(1, port, baudrate)
-count = 0
-a = time.time()
+
+
+Stewart_0.calibrate()
+
 
 
 #Stewart_0.write_var([Index_Stewart.MotorSizes, 2], [Index_Stewart.Offset_X, float(1000)])
-b = time.time()
-
-print(a)
-print(b)
-print(b-a)
-
 #print(Stewart_0.ping())
 
 

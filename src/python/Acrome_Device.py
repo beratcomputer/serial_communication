@@ -41,16 +41,16 @@ class Acrome_Device():
                 self.__ph = serial.Serial(port=portname, baudrate=self.__baudrate, timeout=0.1)
             except Exception as e:
                 print(f"error: {e}")
-        self.__header = header
-        self.__id = id
+        self._header = header
+        self._id = id
         self._vars = variables
         self._ack_size = 0
 
     
-    def __write_bus(self, data):
+    def _write_bus(self, data):
         self.__ph.write(data)
 
-    def __read_bus(self, size) -> bytes:
+    def _read_bus(self, size) -> bytes:
         self.__ph.flushInput()
         return self.__ph.read(size=size)
     
@@ -69,7 +69,7 @@ class Acrome_Device():
         for group in grouped:
             self._vars[group[0]].value(group[1])
     
-    def __read_ack(self) -> bool:
+    def _read_ack(self) -> bool:
         ret = self.__read_bus(self._ack_size)
         #print(list(ret))
         if len(ret) == self._ack_size:
@@ -89,13 +89,13 @@ class Acrome_Device():
 
     def ping(self):
         fmt_str = '<BBBB'
-        struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.PING]))
+        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Device_Commands.PING]))
         struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
         self._ack_size = 8
         #burayi kontrol et.
-        self.__write_bus(struct_out)
+        self._write_bus(struct_out)
         
-        if self.__read_ack():
+        if self._read_ack():
             return True
         else:
             return False
@@ -103,14 +103,14 @@ class Acrome_Device():
     def read_var(self, *indexes):
         self._ack_size = 0
         fmt_str = '<BBBB'+'B'*len(indexes)
-        struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, len(indexes) + 8, Device_Commands.READ, *indexes]))
+        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, len(indexes) + 8, Device_Commands.READ, *indexes]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
         for i in indexes:
             self._ack_size += (self._vars[int(i)].size() + 1)
         self._ack_size += 8
-        self.__write_bus(struct_out)
+        self._write_bus(struct_out)
 
-        if self.__read_ack():
+        if self._read_ack():
             return [self._vars[index].value() for index in indexes]
         else:
             return [None]
@@ -133,35 +133,35 @@ class Acrome_Device():
         
         flattened_list = [item for sublist in idx_val_pairs for item in sublist]
 
-        struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, size + 8, Device_Commands.WRITE, *flattened_list]))
+        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, size + 8, Device_Commands.WRITE, *flattened_list]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
         self._ack_size = 8
-        self.__write_bus(struct_out)
-        if self.__read_ack():
+        self._write_bus(struct_out)
+        if self._read_ack():
             return True
         else:
             return False
         
     def reboot(self):
         fmt_str = '<BBBB'
-        struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.REBOOT]))
+        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Device_Commands.REBOOT]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))    
         try:     
-            self.__write_bus(struct_out)
+            self._write_bus(struct_out)
         except:
             print("port error.....")
 	
     def eeprom_save(self):
         fmt_str = '<BBBB'
-        struct_out = list(struct.pack(fmt_str, *[self.__header, self.__id, 8, Device_Commands.EEPROM_WRITE]))
+        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Device_Commands.EEPROM_WRITE]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
         print(struct_out)
         print(CRC32.calc(struct_out))
         #burayi kontrol et.
-        self.__write_bus(struct_out)
+        self._write_bus(struct_out)
         try:     
-            self.__write_bus(struct_out)
-            if self.__read_ack(id):
+            self._write_bus(struct_out)
+            if self._read_ack(id):
                 return True
         except:
             print("port error.....")

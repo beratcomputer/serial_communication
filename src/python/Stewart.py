@@ -8,6 +8,9 @@ from Acrome_Device import *
 
 STEWART_HEADER = 0x55
 
+class Stewart_ExtraCommands(enum.IntEnum):
+	CALIBRATE = 0x15
+
 Index_Stewart = enum.IntEnum('Index', [
 	'Header',
 	'DeviceID',
@@ -165,8 +168,13 @@ class Stewart(Acrome_Device):
 		self._vars[Index_Stewart.DeviceID].value(ID)
 
 	def calibrate(self):
-		pass
-
+		fmt_str = '<BBBB'
+		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.CALIBRATE]))
+		struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
+		self._ack_size = 8
+		#burayi kontrol et.
+		self._write_bus(struct_out)
+		print(list(struct_out))
 	
 	
 
