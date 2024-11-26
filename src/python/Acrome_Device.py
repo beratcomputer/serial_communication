@@ -70,7 +70,7 @@ class Acrome_Device():
             self._vars[group[0]].value(group[1])
     
     def _read_ack(self) -> bool:
-        ret = self.__read_bus(self._ack_size)
+        ret = self._read_bus(self._ack_size)
         #print(list(ret))
         if len(ret) == self._ack_size:
             if (CRC32.calc(ret[:-4]) == struct.unpack('<I', ret[-4:])[0]):
@@ -85,7 +85,17 @@ class Acrome_Device():
                 return False
         else:
             return False
-    
+        
+    def _read_var_no_timeout(self):
+        self.__ph.timeout = 30
+        ack_flag = self._read_ack()
+        self.__ph.timeout = 0.1
+        if ack_flag:
+            return True
+        else:
+            return False 
+        
+         
 
     def ping(self):
         fmt_str = '<BBBB'

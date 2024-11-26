@@ -6,7 +6,27 @@ Stewart_0 = Stewart(0, port, baudrate)
 #Stewart_1 = Stewart(1, port, baudrate)
 
 
-Stewart_0.calibrate()
+
+
+print(Stewart_0.calibrate())
+
+Stewart_0.control()
+Stewart_0.write_var([Index_Stewart.OperationMode, Stewart_ControlModes.ExternalTrajectory1])
+
+while True:
+    motors = [0,0,0,0,0,0]
+    for i in range(len(motors)):
+        motors[i] = input(f"{i}. Motor = ")
+
+    Stewart_0.write_var([Index_Stewart.Motor1_GoalPosition, float(motors[0])], [Index_Stewart.Motor2_GoalPosition, float(motors[1])], [Index_Stewart.Motor3_GoalPosition, float(motors[2])], [Index_Stewart.Motor4_GoalPosition, float(motors[3])], [Index_Stewart.Motor5_GoalPosition, float(motors[4])], [Index_Stewart.Motor6_GoalPosition, float(motors[5])])
+    Stewart_0.write_var([Index_Stewart.TorqueEnable , 1])
+
+#Stewart_0.control_sync()
+
+
+
+
+
 
 
 

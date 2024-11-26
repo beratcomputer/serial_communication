@@ -8,8 +8,16 @@ from Acrome_Device import *
 
 STEWART_HEADER = 0x55
 
+class Stewart_ControlModes(enum.IntEnum):
+	InternalTrajectory = 1,
+	ExternalTrajectory0 = 2,
+	ExternalTrajectory1 = 3
+
 class Stewart_ExtraCommands(enum.IntEnum):
-	CALIBRATE = 0x15
+	IDLE = 0x15,
+	CALIBRATE = 0x16,
+	CONTROL = 0x17,
+	CONTROL_SYNC = 0x18,
 
 Index_Stewart = enum.IntEnum('Index', [
 	'Header',
@@ -37,6 +45,12 @@ Index_Stewart = enum.IntEnum('Index', [
 	'Offset_Z',
 	'InternalTrajectory_SpeedSetting',
 	'InternalTrajectory_time',
+	'Motor1_GoalPosition',
+	'Motor2_GoalPosition',
+	'Motor3_GoalPosition',
+	'Motor4_GoalPosition',
+	'Motor5_GoalPosition',
+	'Motor6_GoalPosition',
 	'MotorsPID_Gain',
 	'MotorsPID_Deadbend',
 	'Motor1_P',
@@ -81,6 +95,12 @@ Index_Stewart = enum.IntEnum('Index', [
 	'Motor4_Position',
 	'Motor5_Position',
 	'Motor6_Position',
+	'Motor1_CalibrationOutput',
+	'Motor2_CalibrationOutput',
+	'Motor3_CalibrationOutput',
+	'Motor4_CalibrationOutput',
+	'Motor5_CalibrationOutput',
+	'Motor6_CalibrationOutput',
 	'CRCValue',
 ], start=0)
 
@@ -117,6 +137,12 @@ class Stewart(Acrome_Device):
             Data_(Index_Stewart.Offset_Z,'f'),
             Data_(Index_Stewart.InternalTrajectory_SpeedSetting,'f'),
             Data_(Index_Stewart.InternalTrajectory_time,'f'),
+			Data_(Index_Stewart.Motor1_GoalPosition, 'f'),
+			Data_(Index_Stewart.Motor2_GoalPosition, 'f'),
+			Data_(Index_Stewart.Motor3_GoalPosition, 'f'),
+			Data_(Index_Stewart.Motor4_GoalPosition, 'f'),
+			Data_(Index_Stewart.Motor5_GoalPosition, 'f'),
+			Data_(Index_Stewart.Motor6_GoalPosition, 'f'),
             Data_(Index_Stewart.MotorsPID_Gain,'f'),
             Data_(Index_Stewart.MotorsPID_Deadbend,'f'),
             Data_(Index_Stewart.Motor1_P,'f'),
@@ -162,6 +188,12 @@ class Stewart(Acrome_Device):
             Data_(Index_Stewart.Motor4_Position,'f'),
             Data_(Index_Stewart.Motor5_Position,'f'),
             Data_(Index_Stewart.Motor6_Position,'f'),
+			Data_(Index_Stewart.Motor1_CalibrationOutput,'f'),
+			Data_(Index_Stewart.Motor2_CalibrationOutput,'f'),
+			Data_(Index_Stewart.Motor3_CalibrationOutput,'f'),
+			Data_(Index_Stewart.Motor4_CalibrationOutput,'f'),
+			Data_(Index_Stewart.Motor5_CalibrationOutput,'f'),
+			Data_(Index_Stewart.Motor6_CalibrationOutput,'f'),
             Data_(Index_Stewart.CRCValue, 'I'),
         ]
 		super().__init__(STEWART_HEADER, ID, Datas_Stewart, port, baudrate)
@@ -171,10 +203,40 @@ class Stewart(Acrome_Device):
 		fmt_str = '<BBBB'
 		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.CALIBRATE]))
 		struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
+		self._ack_size = 38 #  38 = 4 + 6*(4+1) + 4
+		self._write_bus(struct_out)
+
+		indexes = [Index_Stewart.Motor1_CalibrationOutput, Index_Stewart.Motor2_CalibrationOutput, Index_Stewart.Motor3_CalibrationOutput, Index_Stewart.Motor4_CalibrationOutput, Index_Stewart.Motor5_CalibrationOutput, Index_Stewart.Motor6_CalibrationOutput, ]
+		if self._read_var_no_timeout():
+			return [self._vars[index].value() for index in indexes]
+		else:
+			return False
+
+
+
+	def control(self):
+		fmt_str = '<BBBB'
+		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.CONTROL]))
+		struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
 		self._ack_size = 8
 		#burayi kontrol et.
 		self._write_bus(struct_out)
-		print(list(struct_out))
+
+	def control_sync(self):
+		fmt_str = '<BBBB'
+		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.CONTROL_SYNC]))
+		struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
+		self._ack_size = 8
+		#burayi kontrol et.
+		self._write_bus(struct_out)
+
+	def idle(self):
+		fmt_str = '<BBBB'
+		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.IDLE]))
+		struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
+		self._ack_size = 8
+		#burayi kontrol et.
+		self._write_bus(struct_out)
 	
 	
 
