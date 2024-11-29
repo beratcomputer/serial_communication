@@ -1,5 +1,5 @@
 from acrome_embedded_devices import *
-port = "COM6"
+port = "COM11"
 baudrate = 921600 
 
 Stewart_0 = Stewart(0, port, baudrate)
@@ -8,13 +8,16 @@ Stewart_0 = Stewart(0, port, baudrate)
 
 
 
-#print(Stewart_0.calibrate())
+print(Stewart_0.calibrate())
 
 Stewart_0.control()
-Stewart_0.write_var([Index_Stewart.OperationMode, Stewart_ControlModes.ExternalTrajectory0])
+Stewart_0.write_var([Index_Stewart.OperationMode, Stewart_ControlModes.InternalTrajectory])
 #Stewart_0.write_var([Index_Stewart.Motor1_P, float(10)], [Index_Stewart.Motor2_P, float(10)], [Index_Stewart.Motor1_3, float(10)], [Index_Stewart.Motor4_P, float(10)], [Index_Stewart.Motor5_P, float(10)], [Index_Stewart.Motor6_P, float(10)])
-Stewart_0.write_var([Index_Stewart.Motor1_P, 10.0],[Index_Stewart.Motor2_P, 10.0],[Index_Stewart.Motor3_P, 10.0])
-Stewart_0.write_var([Index_Stewart.Motor4_P, 10.0],[Index_Stewart.Motor5_P, 10.0],[Index_Stewart.Motor6_P, 10.0])
+Stewart_0.write_var([Index_Stewart.Motor1_P, 6.0],[Index_Stewart.Motor2_P, 6.0],[Index_Stewart.Motor3_P, 6.0])
+Stewart_0.write_var([Index_Stewart.Motor4_P, 6.0],[Index_Stewart.Motor5_P, 6.0],[Index_Stewart.Motor6_P, 6.0])
+
+Stewart_0.write_var([Index_Stewart.Motor1_D, 1.0],[Index_Stewart.Motor2_D, 1.0],[Index_Stewart.Motor3_D, 1.0])
+Stewart_0.write_var([Index_Stewart.Motor4_D, 1.0],[Index_Stewart.Motor5_D, 1.0],[Index_Stewart.Motor6_D, 1.0])
 
 while True:
     xyz = [0,0,0]

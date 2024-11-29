@@ -213,7 +213,6 @@ class Stewart(Acrome_Device):
 			return False
 
 
-
 	def control(self):
 		fmt_str = '<BBBB'
 		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.CONTROL]))
