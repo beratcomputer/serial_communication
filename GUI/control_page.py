@@ -2,8 +2,9 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 
 
 class ControlPage(QWidget):
-    def __init__(self):
+    def __init__(self, stewart):
         super().__init__()
+        self.stewart = stewart
         self.initUI()
 
     def initUI(self):

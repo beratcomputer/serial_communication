@@ -51,8 +51,6 @@ Index_Stewart = enum.IntEnum('Index', [
 	'Motor4_GoalPosition',
 	'Motor5_GoalPosition',
 	'Motor6_GoalPosition',
-	'MotorsPID_Gain',
-	'MotorsPID_Deadbend',
 	'Motor1_P',
 	'Motor2_P',
 	'Motor3_P',
@@ -71,6 +69,18 @@ Index_Stewart = enum.IntEnum('Index', [
 	'Motor4_D',
 	'Motor5_D',
 	'Motor6_D',
+	'Motor1_Gain',
+	'Motor2_Gain',
+	'Motor3_Gain',
+	'Motor4_Gain',
+	'Motor5_Gain',
+	'Motor6_Gain',
+	'Motor1_Deadband',
+	'Motor2_Deadband',
+	'Motor3_Deadband',
+	'Motor4_Deadband',
+	'Motor5_Deadband',
+	'Motor6_Deadband',
 	'PresentPosition_X', #'ReadOnlyStart' = 'PresentPosition_X'
 	'PresentPosition_Y',
 	'PresentPosition_Z',
@@ -106,7 +116,7 @@ Index_Stewart = enum.IntEnum('Index', [
 
 
 class Stewart(Acrome_Device):
-	def __init__(self, ID, port, baudrate, _test = False) -> bool:
+	def __init__(self, ID, port, baudrate = 921600, _test = False) -> bool:
 		
 		self.__ack_size = 0
 		if ID > 255 or ID < 0:
@@ -143,8 +153,6 @@ class Stewart(Acrome_Device):
 			Data_(Index_Stewart.Motor4_GoalPosition, 'f'),
 			Data_(Index_Stewart.Motor5_GoalPosition, 'f'),
 			Data_(Index_Stewart.Motor6_GoalPosition, 'f'),
-            Data_(Index_Stewart.MotorsPID_Gain,'f'),
-            Data_(Index_Stewart.MotorsPID_Deadbend,'f'),
             Data_(Index_Stewart.Motor1_P,'f'),
             Data_(Index_Stewart.Motor2_P,'f'),
             Data_(Index_Stewart.Motor3_P,'f'),
@@ -163,6 +171,18 @@ class Stewart(Acrome_Device):
             Data_(Index_Stewart.Motor4_D,'f'),
             Data_(Index_Stewart.Motor5_D,'f'),
             Data_(Index_Stewart.Motor6_D,'f'),
+			Data_(Index_Stewart.Motor1_Deadband,'f'),
+			Data_(Index_Stewart.Motor2_Deadband,'f'),
+			Data_(Index_Stewart.Motor3_Deadband,'f'),
+			Data_(Index_Stewart.Motor4_Deadband,'f'),
+			Data_(Index_Stewart.Motor5_Deadband,'f'),
+			Data_(Index_Stewart.Motor6_Deadband,'f'),
+			Data_(Index_Stewart.Motor1_Gain,'f'),
+			Data_(Index_Stewart.Motor2_Gain,'f'),
+			Data_(Index_Stewart.Motor3_Gain,'f'),
+			Data_(Index_Stewart.Motor4_Gain,'f'),
+			Data_(Index_Stewart.Motor5_Gain,'f'),
+			Data_(Index_Stewart.Motor6_Gain,'f'),
             Data_(Index_Stewart.PresentPosition_X,'f'),
             Data_(Index_Stewart.PresentPosition_Y,'f'),
             Data_(Index_Stewart.PresentPosition_Z,'f'),
@@ -200,9 +220,8 @@ class Stewart(Acrome_Device):
 
 	def get_classic_packet_0(self):
 		custom_package_list = [Index_Stewart.Motor1_Position, Index_Stewart.Motor2_Position, Index_Stewart.Motor3_Position, Index_Stewart.Motor4_Position, Index_Stewart.Motor5_Position, Index_Stewart.Motor6_Position]
-		#self.read_var(*custom_package_list)
-		self._test_read_var(*custom_package_list)
-
+		self.read_var(*custom_package_list)
+		
 	def calibrate(self):
 		fmt_str = '<BBBB'
 		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.CALIBRATE]))

@@ -5,23 +5,17 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from config_widgets.pid_table import PID_Table
-from config_widgets.stewart_parameter_list import *
 
 
 class CustomLineEdit(QLineEdit):
-    def __init__(self, table_name, row, col, stewart, parent=None):
+    def __init__(self, table_name, row, col, parent=None):
         super().__init__(parent)
         self.table_name = table_name  # Hangi tabloya ait olduğunu belirtiyor
         self.row = row
         self.col = col
-        self.stewart = stewart
 
     def focusOutEvent(self, event):
         value = self.text()
-        type_of_parameter = self.stewart._vars[int(self.row)].type()
-        changeable = self.stewart._vars[int(self.row)].
-        print("parameter type = ",type_of_parameter)
-        #stewart.write_var([int(self.row), value] )
         print(f'Tablo: {self.table_name}, Satır: {self.row}, Sütun: {self.col}, Girilen Değer: {value}')
         super().focusOutEvent(event)
 
@@ -37,10 +31,7 @@ class ConfigPage(QWidget):
             'pid': {}
         }
         self.initUI()
-
-        self.stewart.get_all_variable()
-        
-        
+       
 
     def initUI(self):
         self.setWindowTitle('Config Page')
@@ -53,26 +44,60 @@ class ConfigPage(QWidget):
 
         # Defaults tablosu
         self.defaults_table = self.create_table(
-            stewart_parameter_list,
-            'Config'
+            ['Header', 'Device ID', 'Hardware Version', 'Software Version', 'Baudrate'],
+            'Defaults'
         )
         left_layout.addWidget(self.defaults_table)
-        
+
+        # Config tablosu
+        self.config_table = self.create_table(
+            ['Motor Max Speeds', 'Device Loop Frequency', 'Motor CPRs'],
+            'Config'
+        )
+        left_layout.addWidget(self.config_table)
+
+        # Offsets tablosu
+        self.offsets_table = self.create_table(
+            ['Offset X', 'Offset Y', 'Offset Z'],
+            'Offsets'
+        )
+        left_layout.addWidget(self.offsets_table)
+
         # PID tablosu
-        self.pid_table = PID_Table(self.stewart)
+        self.pid_table = QTableWidget(5, 7, self)
+        self.pid_table.setHorizontalHeaderLabels(['1', '2', '3', '4', '5', '6', 'ALL'])
+        self.pid_table.setVerticalHeaderLabels(['P', 'I', 'D', 'Deadband', 'Gain'])
+
+        # PID tablosu verilerini sözlükte saklamak için yapı
+        self.table_data['pid'] = {}
+
+        for row in range(5):  # 5 satır
+            self.table_data['pid'][row] = {}  # Her satır için ayrı bir sözlük
+            for col in range(7):
+                if col == 6:  # ALL sütunu
+                    line_edit = CustomLineEdit('pid', row, col, self)
+                    line_edit.returnPressed.connect(self.on_all_input)
+                else:  # Diğer sütunlar
+                    line_edit = CustomLineEdit(row, col, self)
+                    line_edit.textChanged.connect(lambda value, r=row, c=col: self.update_table_data('pid', r, c, value))
+                    #line_edit.textChanged.connect(lambda value, r=row, t=title: self.update_table_data(t, r, value))
+
+                self.pid_table.setCellWidget(row, col, line_edit)
+
+        left_layout.addWidget(QLabel('PID Settings'))
         left_layout.addWidget(self.pid_table)
+
         main_layout.addLayout(left_layout)
+
 
         # Sağ layout (Butonlar ve diğer bileşenler)
         right_layout = QVBoxLayout()
         refresh_button = QPushButton('Refresh', self)
-        calibrate_button = QPushButton('Calibrate', self)
         reboot_button = QPushButton('Reboot', self)
         eeprom_button = QPushButton('EEPROM SAVE', self)
         factory_reset_button = QPushButton('Factory Reset', self)
 
         right_layout.addWidget(refresh_button)
-        right_layout.addWidget(calibrate_button)
         right_layout.addWidget(reboot_button)
         right_layout.addWidget(eeprom_button)
         right_layout.addWidget(factory_reset_button)
@@ -114,9 +139,33 @@ class ConfigPage(QWidget):
         for row, parameter in enumerate(parameters):
             table.setItem(row, 0, QTableWidgetItem(parameter))
             
-            line_edit = CustomLineEdit(title, row, 1, self.stewart ,self)  # Tablo adını da geçiriyoruz
+            line_edit = CustomLineEdit(title, row, 1, self)  # Tablo adını da geçiriyoruz
+            line_edit.textChanged.connect(lambda value, r=row, t=title: self.update_table_data(t, r, parameter, value))
             table.setCellWidget(row, 1, line_edit)
             table.item(row, 0).setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
 
         return table
-    
+
+
+    def on_all_input(self):
+        line_edit = self.sender()
+        value = line_edit.text()
+        indexes = self.pid_table.indexAt(line_edit.pos())
+        if indexes.isValid():
+            row = indexes.row()
+            for col in range(6):  # 1-6 sütunları
+                widget = self.pid_table.cellWidget(row, col)
+                if isinstance(widget, QLineEdit):
+                    widget.setText(value)
+                    self.update_table_data('pid', (row, col), value)  # Sözlüğü de güncelle
+
+    def update_table_data(self, table_name, row, col, value):
+        if table_name not in self.table_data:
+            return
+
+        if row not in self.table_data[table_name]:
+            self.table_data[table_name][row] = {}
+
+        self.table_data[table_name][row][col] = value
+        print(f'{table_name} tablosunda [Satır: {row}, Sütun: {col}] için güncellenen değer: {value}')
+

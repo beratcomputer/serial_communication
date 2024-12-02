@@ -18,7 +18,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 's
 # subthree modülünü import et
 from acrome_embedded_devices import *
 
-
 class StartupPage(QMainWindow):
     """Başlangıç Penceresi."""
     def __init__(self):
@@ -157,7 +156,8 @@ class StartupPage(QMainWindow):
             self.show_error_message("No device added!")
             return
         print(self.device_list)
-        self.main_app = MainApp(device_list=self.device_list)  # İkinci pencereyi oluştur
+
+        self.main_app = MainApp(device_list=self.device_list, port=self.selected_port)  # İkinci pencereyi oluştur
         self.main_app.show()       # İkinci pencereyi göster
         self.close()               # Bu pencereyi kapat
 

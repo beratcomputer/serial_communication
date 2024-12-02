@@ -32,6 +32,7 @@ class Device_Commands(enum.IntEnum):
 class Acrome_Device():
     _BATCH_ID = 254
     def __init__(self, header, id, variables, portname, baudrate=921600, _test = False):
+        self._test = _test
         if _test == False:
             if baudrate > 9500000 or baudrate < 1200:
                 raise ValueError("Baudrate must be in range of 1200 to 9.5M")
@@ -119,6 +120,11 @@ class Acrome_Device():
         for i in indexes:
             self._ack_size += (self._vars[int(i)].size() + 1)
         self._ack_size += 8
+
+        if self._test == True:
+            print(list(struct_out))
+            return struct_out
+
         self._write_bus(struct_out)
 
         if self._read_ack():
@@ -147,6 +153,11 @@ class Acrome_Device():
         struct_out = list(struct.pack(fmt_str, *[self._header, self._id, size + 8, Device_Commands.WRITE, *flattened_list]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
         self._ack_size = 8
+
+        if self._test == True:
+            print(list(struct_out))
+            return
+        
         self._write_bus(struct_out)
         if self._read_ack():
             return True
@@ -185,58 +196,34 @@ class Acrome_Device():
             j = i
             k = min(i + 9, len(self._vars) - 1)  # Son grupta sınırlamayı sağlar
             index_list = list(range(j, k + 1))
-            self._test_read_var(*index_list)
-            #self.read_var(*index_list) # her birisi maksimum data sayisiymis gibi dusunerek yazarsak 4 byte olur. her bir pakette 10 adet alsin. maksimuma vurmak istemedigimizden dolayi.
-
-
-    def _test_read_var(self, *indexes):
-        self._ack_size = 0
-        fmt_str = '<BBBB'+'B'*len(indexes)
-        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, len(indexes) + 8, Device_Commands.READ, *indexes]))
-        struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-        print(list(struct_out))
-    def _test_write_var(self, *idx_val_pairs):
-        # returns : did ACK come?
-        fmt_str = '<BBBB'
-        var_count = 0
-        size = 0
-        for one_pair in idx_val_pairs:
-            try:
-                if len(one_pair) != 2:
-                    raise ValueError(f"{one_pair} more than a pair! It is not a pair")
-                else:
-                    fmt_str += ('B' + self._vars[one_pair[0]].type())
-                    var_count+=1
-                    size += (1 + self._vars[one_pair[0]].size())
-            except:
-                raise ValueError(f"{one_pair} is not proper pair")
-        
-        flattened_list = [item for sublist in idx_val_pairs for item in sublist]
-
-        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, size + 8, Device_Commands.WRITE, *flattened_list]))
-        struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-        print(list(struct_out))
-
+            if self._test == True: 
+                self._test_read_var(*index_list)
+            else: 
+                self.read_var(*index_list) # her birisi maksimum data sayisiymis gibi dusunerek yazarsak 4 byte olur. her bir pakette 10 adet alsin. maksimuma vurmak istemedigimizden dolayi.
 
 class Data_():
-	def __init__(self, index, var_type, rw=True, value = 0):
-		self.__index = index
-		self.__type = var_type
-		self.__size  = struct.calcsize(self.__type)
-		self.__value = value
-		self.__rw = rw
+    def __init__(self, index, var_type, rw=True, value = 0):
+        self.__index = index
+        self.__type = var_type
+        self.__size  = struct.calcsize(self.__type)
+        self.__value = value
+        self.__rw = rw
 
-	def value(self, value=None):
-		if value is None:
-			return self.__value
-		elif self.__rw:
-			self.__value = struct.unpack('<' + self.__type, struct.pack('<' + self.__type, value))[0]
+    def value(self, value=None):
+        if value is None:
+            return self.__value
+        elif self.__rw:
+            self.__value = struct.unpack('<' + self.__type, struct.pack('<' + self.__type, value))[0]
 
-	def index(self) ->enum.IntEnum:
-		return self.__index
+    def index(self) ->enum.IntEnum:
+        return self.__index
+    
+    def writeable(self) -> bool:
+        return self.__rw
 
-	def size(self) -> int:
-		return self.__size
+    def size(self) -> int:
+        return self.__size
 	
-	def type(self) -> str:
-		return self.__type
+    def type(self) -> str:
+        return self.__type
+        

@@ -24,8 +24,10 @@ while True:
     xyz[0] = input(f"x = ")
     xyz[1] = input(f"y = ")
     xyz[2] = input(f"z = ")
+    roll = input(f"roll = ")
+    pitch = input(f"pitch = ")
     
-    Stewart_0.write_var([Index_Stewart.TargetCoordinate_X, float(xyz[0])], [Index_Stewart.TargetCoordinate_Y, float(xyz[1])], [Index_Stewart.TargetCoordinate_Z, float(xyz[2])])
+    Stewart_0.write_var([Index_Stewart.TargetCoordinate_X, float(xyz[0])], [Index_Stewart.TargetCoordinate_Y, float(xyz[1])], [Index_Stewart.TargetCoordinate_Z, float(xyz[2])], [Index_Stewart.TargetRotation_Roll, float(roll)], [Index_Stewart.TargetRotation_Pitch, float(pitch)])
     Stewart_0.write_var([Index_Stewart.TorqueEnable , 1])
 
 while True:
