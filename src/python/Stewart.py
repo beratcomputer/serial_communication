@@ -106,7 +106,7 @@ Index_Stewart = enum.IntEnum('Index', [
 
 
 class Stewart(Acrome_Device):
-	def __init__(self, ID, port, baudrate) -> bool:
+	def __init__(self, ID, port, baudrate, _test = False) -> bool:
 		
 		self.__ack_size = 0
 		if ID > 255 or ID < 0:
@@ -163,7 +163,6 @@ class Stewart(Acrome_Device):
             Data_(Index_Stewart.Motor4_D,'f'),
             Data_(Index_Stewart.Motor5_D,'f'),
             Data_(Index_Stewart.Motor6_D,'f'),
-            Data_(Index_Stewart.Motor6_D,'f'), 
             Data_(Index_Stewart.PresentPosition_X,'f'),
             Data_(Index_Stewart.PresentPosition_Y,'f'),
             Data_(Index_Stewart.PresentPosition_Z,'f'),
@@ -196,8 +195,13 @@ class Stewart(Acrome_Device):
 			Data_(Index_Stewart.Motor6_CalibrationOutput,'f'),
             Data_(Index_Stewart.CRCValue, 'I'),
         ]
-		super().__init__(STEWART_HEADER, ID, Datas_Stewart, port, baudrate)
+		super().__init__(STEWART_HEADER, ID, Datas_Stewart, port, baudrate, _test)
 		self._vars[Index_Stewart.DeviceID].value(ID)
+
+	def get_classic_packet_0(self):
+		custom_package_list = [Index_Stewart.Motor1_Position, Index_Stewart.Motor2_Position, Index_Stewart.Motor3_Position, Index_Stewart.Motor4_Position, Index_Stewart.Motor5_Position, Index_Stewart.Motor6_Position]
+		#self.read_var(*custom_package_list)
+		self._test_read_var(*custom_package_list)
 
 	def calibrate(self):
 		fmt_str = '<BBBB'

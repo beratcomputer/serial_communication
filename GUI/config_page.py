@@ -1,5 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QTableWidget, QTableWidgetItem, QLineEdit, QVBoxLayout, QHeaderView, QGroupBox, QCheckBox, QComboBox
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import (
+    QWidget, QTableWidget, QTableWidgetItem, QLineEdit, QVBoxLayout,
+    QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy, QComboBox, QHeaderView
+)
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
@@ -9,10 +11,8 @@ class CustomLineEdit(QLineEdit):
         super().__init__(parent)
 
     def focusOutEvent(self, event):
-        # Kutunun dışına tıklayınca tetiklenen fonksiyon
-        value = self.text()  # Girilen değeri al
+        value = self.text()
         print(f'Odak dışı girilen değer: {value}')
-        # Varsayılan focusOutEvent işlevini çağır
         super().focusOutEvent(event)
 
 
@@ -22,112 +22,119 @@ class ConfigPage(QWidget):
         self.initUI()
 
     def initUI(self):
-        # Ana pencere ayarları
-        self.setWindowTitle('20x2 Tablo ve Butonlar')
-        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle('Config Page')
+        self.setGeometry(100, 100, 900, 700)
 
-        # Ana yatay layout (sola tablo, sağa butonlar gelecek)
         main_layout = QHBoxLayout()
 
-        # Tablo ve widget'lar için sol layout (tablo kısmı)
-        table_layout = QVBoxLayout()
+        # Sol layout (Tablolar grubu)
+        left_layout = QVBoxLayout()
 
-        # 20x4 tablo oluşturma
-        self.table = QTableWidget(20, 4, self)
-        self.table.setHorizontalHeaderLabels(['Parameter', 'Variable', 'Parameter', 'Variable'])
+        # Defaults tablosu
+        self.defaults_table = self.create_table(
+            ['Header', 'Device ID', 'Hardware Version', 'Software Version', 'Baudrate'],
+            'Defaults'
+        )
+        left_layout.addWidget(self.defaults_table)
 
-        # Sütun genişliğinin pencere boyutuna göre ayarlanması
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Stretch)
+        # Config tablosu
+        self.config_table = self.create_table(
+            ['Motor Max Speeds', 'Device Loop Frequency', 'Motor CPRs'],
+            'Config'
+        )
+        left_layout.addWidget(self.config_table)
 
-        # İlk sütuna metin, ikinci sütuna QLineEdit ekleme
-        for row in range(20):
-            # Her hücreye metin ekleme
-            item = QTableWidgetItem(f'Parameter {row + 1}')
-            self.table.setItem(row, 0, item)
-            item2 = QTableWidgetItem(f'Parameter {row + 1}')
-            self.table.setItem(row, 2, item2)
+        # Offsets tablosu
+        self.offsets_table = self.create_table(
+            ['Offset X', 'Offset Y', 'Offset Z'],
+            'Offsets'
+        )
+        left_layout.addWidget(self.offsets_table)
 
-            # Sayı girişi için QLineEdit ekleme
-            line_edit = CustomLineEdit(self)
-            line_edit.setPlaceholderText('Sayı girin')
-            line_edit.returnPressed.connect(self.on_input_entered)  # Enter'a basıldığında tetiklenir
-            self.table.setCellWidget(row, 1, line_edit)
+        # PID tablosu
+        self.pid_table = QTableWidget(5, 7, self)
+        self.pid_table.setHorizontalHeaderLabels(['1', '2', '3', '4', '5', '6', 'ALL'])
+        self.pid_table.setVerticalHeaderLabels(['P', 'I', 'D', 'Deadband', 'Gain'])
 
-            line_edit2 = CustomLineEdit(self)
-            line_edit2.setPlaceholderText('Sayı girin')
-            line_edit2.returnPressed.connect(self.on_input_entered)  # Enter'a basıldığında tetiklenir
-            self.table.setCellWidget(row, 3, line_edit2)
+        for row in range(5):  # Artık 5 satır var
+            for col in range(7):
+                if col == 6:  # ALL sütununa bir QLineEdit ekle
+                    line_edit = CustomLineEdit(self)
+                    line_edit.returnPressed.connect(self.on_all_input)
+                    self.pid_table.setCellWidget(row, col, line_edit)
+                else:  # Diğer sütunlara QLineEdit ekle
+                    line_edit = CustomLineEdit(self)
+                    self.pid_table.setCellWidget(row, col, line_edit)
 
-        # Sol layout'a tablo ekleme
-        table_layout.addWidget(self.table)
+        left_layout.addWidget(QLabel('PID Settings'))
+        left_layout.addWidget(self.pid_table)
 
-        # Sağ layout (butonlar, resim ve 5x1 tablo için)
-        side_layout = QVBoxLayout()
+        main_layout.addLayout(left_layout)
 
-        # 5 tane buton ekleme
-        refresh_button = QPushButton(f'Refresh', self)
-        side_layout.addWidget(refresh_button)
-        reboot_button = QPushButton(f'Reboot ', self)
-        side_layout.addWidget(reboot_button)
-        eeprom_write_button = QPushButton(f'EEPROM SAVE', self)
-        side_layout.addWidget(eeprom_write_button)
-        factory_reset_button = QPushButton(f'Factory Reset', self)
-        side_layout.addWidget(factory_reset_button)
+        # Sağ layout (Butonlar ve diğer bileşenler)
+        right_layout = QVBoxLayout()
+        refresh_button = QPushButton('Refresh', self)
+        reboot_button = QPushButton('Reboot', self)
+        eeprom_button = QPushButton('EEPROM SAVE', self)
+        factory_reset_button = QPushButton('Factory Reset', self)
 
-        # Resim ve yanına metin ve seçim kutusu eklemek için yatay layout
-        image_and_settings_layout = QHBoxLayout()  # Hızalı (Horizontal) layout kullanıyoruz
+        right_layout.addWidget(refresh_button)
+        right_layout.addWidget(reboot_button)
+        right_layout.addWidget(eeprom_button)
+        right_layout.addWidget(factory_reset_button)
 
-        # Resim ekleme
-        self.image_label = QLabel(self)
-        pixmap = QPixmap('GUI/images/stewart.png')  # Yerel dosyadan resim yükleyin
-        if pixmap.isNull():  # Eğer resim bulunamazsa, hata kontrolü yapalım
-            pixmap = QPixmap(200, 200)  # Placeholder boyutunda gri bir resim ekle
+        # Resim ve ayarlar kısmı
+        image_and_settings_layout = QHBoxLayout()
+        image_label = QLabel(self)
+        pixmap = QPixmap('GUI/images/stewart.png')
+        if pixmap.isNull():
+            pixmap = QPixmap(200, 200)
             pixmap.fill(Qt.gray)
         else:
-            pixmap = pixmap.scaled(400, 400, Qt.KeepAspectRatio)
-        self.image_label.setPixmap(pixmap)
-        image_and_settings_layout.addWidget(self.image_label)  # Resmi layout'a ekle
+            pixmap = pixmap.scaled(300, 300, Qt.KeepAspectRatio)
+        image_label.setPixmap(pixmap)
+        image_and_settings_layout.addWidget(image_label)
 
-        # Metin ve kutucuklar için dikey layout
         settings_layout = QVBoxLayout()
-
-        # Metin ekleme
-        config_label = QLabel("Config Setting", self)
-        settings_layout.addWidget(config_label)
-
-        # QComboBox ekleme (4 tane seçenek)
+        settings_layout.addWidget(QLabel('Config Setting'))
         self.combo_box = QComboBox(self)
         self.combo_box.addItems(['Option 1', 'Option 2', 'Option 3', 'Option 4'])
         settings_layout.addWidget(self.combo_box)
-
-        # Ayarları içeren dikey layout'u yatay layout'a ekleme
         image_and_settings_layout.addLayout(settings_layout)
 
-        # side_layout'a (butonlar ile tablo arasına) image_and_settings_layout'ı ekleme
-        side_layout.addLayout(image_and_settings_layout)
-        # Altına 5x1 tablo (5 satır, 1 sütun)
-        self.small_table = QTableWidget(8, 2, self)
-        self.small_table.setHorizontalHeaderLabels(['Parameter', 'Value'])
-        header2 = self.small_table.horizontalHeader()
-        header2.setSectionResizeMode(QHeaderView.Stretch)
-        for row in range(8):
-            self.small_table.setItem(row, 0, QTableWidgetItem(f'Param {row + 1}'))
+        right_layout.addLayout(image_and_settings_layout)
 
-        side_layout.addWidget(self.small_table)
+        # Spacer
+        right_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        # Spacer (butonlar ve tablo arasında boşluk bırakmak için)
-        side_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
-        # Ana layout'a sol ve sağ layoutları ekleme
-        main_layout.addLayout(table_layout)  # Sola tablo
-        main_layout.addLayout(side_layout)   # Sağa butonlar ve diğer bileşenler
-
-        # Ana layout'u pencereye ekleme
+        main_layout.addLayout(right_layout)
         self.setLayout(main_layout)
 
-    def on_input_entered(self):
-        # Enter'a basıldığında tetiklenen fonksiyon
-        line_edit = self.sender()  # Hangi QLineEdit'in sinyal gönderdiğini al
-        value = line_edit.text()  # Girilen değeri al
-        print(f'Enter ile girilen değer: {value}')
+    def create_table(self, parameters, title):
+        rows = len(parameters)
+        table = QTableWidget(rows, 2, self)
+        table.setHorizontalHeaderLabels(['Parameter', 'Value'])
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.Stretch)
+
+        for row, parameter in enumerate(parameters):
+            table.setItem(row, 0, QTableWidgetItem(parameter))  # Parameter hücresi sabit
+            line_edit = CustomLineEdit(self)  # Value hücresi düzenlenebilir
+            table.setCellWidget(row, 1, line_edit)
+            table.item(row, 0).setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)  # Parameter hücresi düzenlenemez
+
+        return table
+
+    def on_all_input(self):
+        line_edit = self.sender()
+        value = line_edit.text()
+        print(f'ALL sütununa girilen değer: {value}')
+
+        # Satırdaki diğer hücrelere ALL'a girilen değeri yaz
+        indexes = self.pid_table.indexAt(line_edit.pos())
+        if indexes.isValid():
+            row = indexes.row()
+            for col in range(6):  # 1-6 sütunları
+                widget = self.pid_table.cellWidget(row, col)
+                if isinstance(widget, QLineEdit):
+                    widget.setText(value)

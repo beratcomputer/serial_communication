@@ -5,8 +5,10 @@ from control_page import ControlPage
 
 
 class MainApp(QWidget):
-    def __init__(self):
+    def __init__(self, device_list):
         super().__init__()
+        self.device_list = device_list  # Cihaz listesi
+        self.one_device = device_list[0]
         self.initUI()
 
     def initUI(self):
@@ -22,8 +24,8 @@ class MainApp(QWidget):
         self.control_page = ControlPage()  # Control sayfası
 
         # Sekmelere sayfaları ekleme
-        self.tabs.addTab(self.config_page, "Config Sayfası")
-        self.tabs.addTab(self.control_page, "Control Sayfası")
+        self.tabs.addTab(self.config_page, "Config")
+        self.tabs.addTab(self.control_page, "Control")
 
         # Ana layout
         layout = QVBoxLayout()
@@ -32,8 +34,4 @@ class MainApp(QWidget):
         self.setLayout(layout)
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main_app = MainApp()
-    main_app.show()
-    sys.exit(app.exec_())
+
