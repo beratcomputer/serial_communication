@@ -196,10 +196,7 @@ class Acrome_Device():
             j = i
             k = min(i + 9, len(self._vars) - 1)  # Son grupta sınırlamayı sağlar
             index_list = list(range(j, k + 1))
-            if self._test == True: 
-                self._test_read_var(*index_list)
-            else: 
-                self.read_var(*index_list) # her birisi maksimum data sayisiymis gibi dusunerek yazarsak 4 byte olur. her bir pakette 10 adet alsin. maksimuma vurmak istemedigimizden dolayi.
+            self.read_var(*index_list) # her birisi maksimum data sayisiymis gibi dusunerek yazarsak 4 byte olur. her bir pakette 10 adet alsin. maksimuma vurmak istemedigimizden dolayi.
 
 class Data_():
     def __init__(self, index, var_type, rw=True, value = 0):

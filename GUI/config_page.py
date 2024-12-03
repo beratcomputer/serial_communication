@@ -2,10 +2,16 @@ from PyQt5.QtWidgets import (
     QWidget, QTableWidget, QTableWidgetItem, QLineEdit, QVBoxLayout,
     QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy, QComboBox, QHeaderView
 )
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtCore import Qt
 from config_widgets.pid_table import PID_Table
 from config_widgets.stewart_parameter_list import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'python')))
+# subthree modülünü import et
+from acrome_embedded_devices import *
 
 
 class CustomLineEdit(QLineEdit):
@@ -19,10 +25,17 @@ class CustomLineEdit(QLineEdit):
     def focusOutEvent(self, event):
         value = self.text()
         type_of_parameter = self.stewart._vars[int(self.row)].type()
-        changeable = self.stewart._vars[int(self.row)].
-        print("parameter type = ",type_of_parameter)
-        #stewart.write_var([int(self.row), value] )
-        print(f'Tablo: {self.table_name}, Satır: {self.row}, Sütun: {self.col}, Girilen Değer: {value}')
+        writeable = self.stewart._vars[int(self.row)].writeable()
+
+        if writeable == True and value != '':
+            if type_of_parameter == 'B' or type_of_parameter == 'I':
+                value = int(float(value))
+            elif  type_of_parameter == 'f':
+                value = float(value)
+            else:
+                value = int(value)
+            
+            self.stewart.write_var([int(self.row), value])
         super().focusOutEvent(event)
 
 
@@ -30,17 +43,31 @@ class ConfigPage(QWidget):
     def __init__(self, stewart):
         self.stewart = stewart
         super().__init__()
-        self.table_data = {
-            'defaults': {},
-            'config': {},
-            'offsets': {},
-            'pid': {}
-        }
+
         self.initUI()
 
         self.stewart.get_all_variable()
         
+        # Buraya Defaults tablosunda bazi seyler eklemek istiyorum.
+        # hangi fonksiyonlari kullanmaliyim.
+        self.refresh_all_data()
         
+        no_changable_vars = [Index_Stewart.Header, Index_Stewart.PackageSize, Index_Stewart.Command, Index_Stewart.HardwareVersion,
+                             Index_Stewart.SoftwareVersion, Index_Stewart.Baudrate, Index_Stewart.Status, Index_Stewart.MotorSizes, Index_Stewart.OperationMode] 
+        for row in no_changable_vars:
+            # Value sütunu için işlem
+            cell_widget = self.defaults_table.cellWidget(row, 1)
+            if isinstance(cell_widget, QLineEdit):
+                cell_widget.setReadOnly(True)  # Kullanıcının düzenlemesini engelle
+
+                # Renk değişikliği (gri arka plan)
+                cell_widget.setStyleSheet("background-color: lightgray; color: black;")
+
+            # Parameter sütununu düzenlenemez yap
+            parameter_item = self.defaults_table.item(row, 0)
+            if parameter_item:
+                parameter_item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                parameter_item.setBackground(QColor("lightgray"))  # Gri arka plan
 
     def initUI(self):
         self.setWindowTitle('Config Page')
@@ -65,17 +92,23 @@ class ConfigPage(QWidget):
 
         # Sağ layout (Butonlar ve diğer bileşenler)
         right_layout = QVBoxLayout()
-        refresh_button = QPushButton('Refresh', self)
-        calibrate_button = QPushButton('Calibrate', self)
-        reboot_button = QPushButton('Reboot', self)
-        eeprom_button = QPushButton('EEPROM SAVE', self)
-        factory_reset_button = QPushButton('Factory Reset', self)
+        self.connection_check_button = QPushButton('Connection Check', self)
+        self.refresh_button = QPushButton('Refresh', self)
+        self.calibrate_button = QPushButton('Calibrate', self)
+        self.reboot_button = QPushButton('Reboot', self)
+        self.eeprom_button = QPushButton('EEPROM SAVE', self)
+        self.factory_reset_button = QPushButton('Factory Reset', self)
 
-        right_layout.addWidget(refresh_button)
-        right_layout.addWidget(calibrate_button)
-        right_layout.addWidget(reboot_button)
-        right_layout.addWidget(eeprom_button)
-        right_layout.addWidget(factory_reset_button)
+        right_layout.addWidget(self.connection_check_button)
+        right_layout.addWidget(self.refresh_button)
+        right_layout.addWidget(self.calibrate_button)
+        right_layout.addWidget(self.reboot_button)
+        right_layout.addWidget(self.eeprom_button)
+        right_layout.addWidget(self.factory_reset_button)
+
+        self.connection_check_button.clicked.connect(self.connection_check)
+        self.refresh_button.clicked.connect(self.refresh_all_data)
+        self.calibrate_button.clicked.connect(self.calibrate)
 
         # Resim ve ayarlar kısmı
         image_and_settings_layout = QHBoxLayout()
@@ -103,6 +136,20 @@ class ConfigPage(QWidget):
 
         main_layout.addLayout(right_layout)
         self.setLayout(main_layout)
+
+    def connection_check(self):
+        print(self.stewart.ping())
+
+    def refresh_all_data(self):
+        column = 1
+        for i in self.stewart._vars:
+            line_edit = CustomLineEdit('Config', int(i.index()), column, self.stewart, self)  # CustomLineEdit oluştur
+            line_edit.setText(str(i.value()))  # Değeri ayarla
+            self.defaults_table.setCellWidget(int(i.index()), column, line_edit)  # Hücreye widget olarak ekle
+
+    def calibrate(self):
+        self.stewart.calibrate()
+
 
     def create_table(self, parameters, title):
         rows = len(parameters)

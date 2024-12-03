@@ -9,7 +9,6 @@ from PyQt5.QtGui import QMovie
 from main_app import MainApp  # İkinci pencereyi içe aktar
 from serial.tools import list_ports
 
-import sys
 import os
 
 # src/python klasörünü sys.path'e ekle
