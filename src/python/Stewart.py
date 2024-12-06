@@ -183,7 +183,6 @@ class Stewart(Acrome_Device):
 			Data_(Index_Stewart.Motor4_Deadband,'f'),
 			Data_(Index_Stewart.Motor5_Deadband,'f'),
 			Data_(Index_Stewart.Motor6_Deadband,'f'),
-
             Data_(Index_Stewart.PresentPosition_X,'f'),
             Data_(Index_Stewart.PresentPosition_Y,'f'),
             Data_(Index_Stewart.PresentPosition_Z,'f'),

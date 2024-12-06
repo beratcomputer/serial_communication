@@ -21,10 +21,13 @@ class PID_Table(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("PyQt5 Tablo")
+        self.setWindowTitle("PID Table")
+        self.setGeometry(200, 200, 600, 215)
 
         # Tablo oluştur
         self.table = QTableWidget(6, 7)  # 6 satır: 5 veri + 1 checkbox
+        self.table.resizeRowsToContents()
+        self.table.resizeColumnsToContents()
         self.table.setHorizontalHeaderLabels(["1", "2", "3", "4", "5", "6", "ALL"])
         self.table.setVerticalHeaderLabels(["P", "I", "D", "Gain", "Deadbend", ""])
         header = self.table.horizontalHeader()
@@ -96,17 +99,48 @@ class PID_Table(QWidget):
                 item = self.table.item(row, col)
                 self.data[row][col] = item.text() if item else None
 
+    def upload_data(self):
+        pid_table_list = [[],[],[],[],[]]
+        for i in range(Index_Stewart.Motor1_P, Index_Stewart.Motor6_P + 1):
+            pid_table_list[0].append(self.stewart._vars[i].value())
+        for i in range(Index_Stewart.Motor1_I, Index_Stewart.Motor6_I + 1):
+            pid_table_list[1].append(self.stewart._vars[i].value())
+        for i in range(Index_Stewart.Motor1_D, Index_Stewart.Motor6_D + 1):
+            pid_table_list[2].append(self.stewart._vars[i].value())
+        for i in range(Index_Stewart.Motor1_Gain, Index_Stewart.Motor6_Gain + 1):
+            pid_table_list[3].append(self.stewart._vars[i].value())
+        for i in range(Index_Stewart.Motor1_Deadband, Index_Stewart.Motor6_Deadband + 1):
+            pid_table_list[4].append(self.stewart._vars[i].value())
+        for row in range(5):
+            for col in range(6):
+                pid_table_list[row][col] =  float(pid_table_list[row][col])
+                self.table.item(row, col).setText(str(pid_table_list[row][col]))
 
     def set_values(self):
-        print("Current Table Data:")
         p_data = self.data[0]
         i_data = self.data[1]
         d_data = self.data[2]
         gain_data = self.data[3]
         deadband_data = self.data[4]
+        PID_data = [p_data, i_data, d_data, gain_data, deadband_data]
+
+        print("Current Table Data:")
+        print('p_data',p_data)
+        print('i_data',i_data)
+
+        for i in range(5):
+            for j in range(6):
+                try:
+                    PID_data[i][j] = float(PID_data[i][j])
+                except:
+                    PID_data[i][j] = 0.0
+        print("Current Table Data:", PID_data)
         
         self.stewart.write_var([Index_Stewart.Motor1_P, p_data[0]],[Index_Stewart.Motor2_P, p_data[1]],[Index_Stewart.Motor3_P, p_data[2]],[Index_Stewart.Motor3_P, p_data[3]],[Index_Stewart.Motor3_P, p_data[4]],[Index_Stewart.Motor3_P, p_data[5]])
         self.stewart.write_var([Index_Stewart.Motor1_I, i_data[0]],[Index_Stewart.Motor2_I, i_data[1]],[Index_Stewart.Motor3_I, i_data[2]],[Index_Stewart.Motor3_I, i_data[3]],[Index_Stewart.Motor3_I, i_data[4]],[Index_Stewart.Motor3_I, i_data[5]])
         self.stewart.write_var([Index_Stewart.Motor1_D, d_data[0]],[Index_Stewart.Motor2_D, d_data[1]],[Index_Stewart.Motor3_D, d_data[2]],[Index_Stewart.Motor3_D, d_data[3]],[Index_Stewart.Motor3_D, d_data[4]],[Index_Stewart.Motor3_D, d_data[5]])
         self.stewart.write_var([Index_Stewart.Motor1_Gain, gain_data[0]],[Index_Stewart.Motor2_Gain, gain_data[1]],[Index_Stewart.Motor3_Gain, gain_data[2]],[Index_Stewart.Motor4_Gain, gain_data[3]],[Index_Stewart.Motor5_Gain, gain_data[4]],[Index_Stewart.Motor6_Gain, gain_data[5]])
         self.stewart.write_var([Index_Stewart.Motor1_Deadband, deadband_data[0]],[Index_Stewart.Motor2_Deadband, deadband_data[1]],[Index_Stewart.Motor3_Deadband, deadband_data[2]],[Index_Stewart.Motor4_Deadband, deadband_data[3]],[Index_Stewart.Motor5_Deadband, deadband_data[4]],[Index_Stewart.Motor6_Deadband, deadband_data[5]])
+
+        print('p_data',p_data)
+        print('i_data',i_data)

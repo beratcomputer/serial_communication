@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QTableWidget, QTableWidgetItem, QLineEdit, QVBoxLayout,
-    QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy, QComboBox, QHeaderView
+    QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy, QComboBox, QHeaderView, QProgressDialog, QApplication
 )
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtCore import Qt
@@ -46,29 +46,16 @@ class ConfigPage(QWidget):
 
         self.initUI()
 
-        self.stewart.get_all_variable()
+        self.pid_window = PID_Table(self.stewart)  # PID penceresi için bir referans
+        self.pid_window.hide()
         
         # Buraya Defaults tablosunda bazi seyler eklemek istiyorum.
         # hangi fonksiyonlari kullanmaliyim.
-        self.refresh_all_data()
-        
-        no_changable_vars = [Index_Stewart.Header, Index_Stewart.PackageSize, Index_Stewart.Command, Index_Stewart.HardwareVersion,
+
+        self.no_changable_vars = [Index_Stewart.Header, Index_Stewart.PackageSize, Index_Stewart.Command, Index_Stewart.HardwareVersion,
                              Index_Stewart.SoftwareVersion, Index_Stewart.Baudrate, Index_Stewart.Status, Index_Stewart.MotorSizes, Index_Stewart.OperationMode] 
-        for row in no_changable_vars:
-            # Value sütunu için işlem
-            cell_widget = self.defaults_table.cellWidget(row, 1)
-            if isinstance(cell_widget, QLineEdit):
-                cell_widget.setReadOnly(True)  # Kullanıcının düzenlemesini engelle
 
-                # Renk değişikliği (gri arka plan)
-                cell_widget.setStyleSheet("background-color: lightgray; color: black;")
-
-            # Parameter sütununu düzenlenemez yap
-            parameter_item = self.defaults_table.item(row, 0)
-            if parameter_item:
-                parameter_item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                parameter_item.setBackground(QColor("lightgray"))  # Gri arka plan
-
+        self.refresh_all_data()
     def initUI(self):
         self.setWindowTitle('Config Page')
         self.setGeometry(100, 100, 900, 700)
@@ -85,26 +72,48 @@ class ConfigPage(QWidget):
         )
         left_layout.addWidget(self.defaults_table)
         
-        # PID tablosu
+
+        # PID tablosu butonu
+        self.toggle_pid_button = QPushButton("Open PID Table", self)
+        self.toggle_pid_button.clicked.connect(self.toggle_pid_table)
+        left_layout.addWidget(self.toggle_pid_button)
+
+        '''# PID table
         self.pid_table = PID_Table(self.stewart)
         left_layout.addWidget(self.pid_table)
+        self.toggle_pid_button = QPushButton("Toggle PID Table", self)
+        self.toggle_pid_button.clicked.connect(self.toggle_pid_table)
+        left_layout.addWidget(self.toggle_pid_button)
+        '''
+
         main_layout.addLayout(left_layout)
 
         # Sağ layout (Butonlar ve diğer bileşenler)
         right_layout = QVBoxLayout()
+        
+        # Connection check layout
         self.connection_check_button = QPushButton('Connection Check', self)
+        self.connection_indicator = QLabel(self)
+        self.connection_indicator.setFixedSize(20, 20)
+        self.connection_indicator.setStyleSheet("background-color: green; border: 1px solid black;")
+        connection_check_layout = QHBoxLayout()
+        connection_check_layout.addWidget(self.connection_check_button)
+        connection_check_layout.addWidget(self.connection_indicator)
+
         self.refresh_button = QPushButton('Refresh', self)
         self.calibrate_button = QPushButton('Calibrate', self)
         self.reboot_button = QPushButton('Reboot', self)
         self.eeprom_button = QPushButton('EEPROM SAVE', self)
         self.factory_reset_button = QPushButton('Factory Reset', self)
 
-        right_layout.addWidget(self.connection_check_button)
+        
+        right_layout.addLayout(connection_check_layout)
         right_layout.addWidget(self.refresh_button)
         right_layout.addWidget(self.calibrate_button)
         right_layout.addWidget(self.reboot_button)
         right_layout.addWidget(self.eeprom_button)
         right_layout.addWidget(self.factory_reset_button)
+
 
         self.connection_check_button.clicked.connect(self.connection_check)
         self.refresh_button.clicked.connect(self.refresh_all_data)
@@ -138,17 +147,64 @@ class ConfigPage(QWidget):
         self.setLayout(main_layout)
 
     def connection_check(self):
-        print(self.stewart.ping())
+        if self.stewart.ping():
+            self.connection_indicator.setStyleSheet("background-color: green; border: 1px solid black;")
+        else:
+            self.connection_indicator.setStyleSheet("background-color: red; border: 1px solid black;")
+
 
     def refresh_all_data(self):
-        column = 1
-        for i in self.stewart._vars:
-            line_edit = CustomLineEdit('Config', int(i.index()), column, self.stewart, self)  # CustomLineEdit oluştur
-            line_edit.setText(str(i.value()))  # Değeri ayarla
-            self.defaults_table.setCellWidget(int(i.index()), column, line_edit)  # Hücreye widget olarak ekle
+        # Bekleme animasyonu oluştur
+        progress_dialog = QProgressDialog("Refreshing data...", "Cancel", 0, 0, self)
+        progress_dialog.setWindowTitle("Refreshing")
+        progress_dialog.setWindowModality(Qt.WindowModal)
+        progress_dialog.setAutoClose(True)
+        progress_dialog.setAutoReset(True)
+        progress_dialog.show()
+        QApplication.processEvents() 
+
+        try:
+            self.stewart.get_all_variable()  # Veri yenileme işlemi
+            column = 1
+            for i in self.stewart._vars:
+                line_edit = CustomLineEdit('Config', int(i.index()), column, self.stewart, self)  # CustomLineEdit oluştur
+                line_edit.setText(str(i.value()))  # Değeri ayarla
+                self.defaults_table.setCellWidget(int(i.index()), column, line_edit)  # Hücreye widget olarak ekle
+
+            for row in self.no_changable_vars:
+                # Value sütunu için işlem
+                cell_widget = self.defaults_table.cellWidget(row, 1)
+                if isinstance(cell_widget, QLineEdit):
+                    cell_widget.setReadOnly(True)  # Kullanıcının düzenlemesini engelle
+
+                    # Renk değişikliği (gri arka plan)
+                    cell_widget.setStyleSheet("background-color: lightgray; color: black;")
+
+                # Parameter sütununu düzenlenemez yap
+                parameter_item = self.defaults_table.item(row, 0)
+                if parameter_item:
+                    parameter_item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    parameter_item.setBackground(QColor("lightgray"))  # Gri arka plan
+
+            self.pid_window.upload_data()
+
+        finally:
+            # İşlem tamamlandıktan sonra animasyonu kapat
+            progress_dialog.close()
 
     def calibrate(self):
-        self.stewart.calibrate()
+        progress_dialog = QProgressDialog("Calibrating...", "Cancel", 0, 0, self)
+        progress_dialog.setWindowTitle("Calibration")
+        progress_dialog.setWindowModality(Qt.WindowModal)
+        progress_dialog.setAutoClose(True)
+        progress_dialog.setAutoReset(True)
+        progress_dialog.show()
+        QApplication.processEvents()
+        try:
+            self.stewart.calibrate()
+        finally:
+            progress_dialog.close()
+
 
 
     def create_table(self, parameters, title):
@@ -167,3 +223,9 @@ class ConfigPage(QWidget):
 
         return table
     
+    def toggle_pid_table(self):
+        """PID tablosunun görünürlük durumunu değiştirir."""
+        if self.pid_window.isVisible():
+            self.pid_window.hide()
+        else:
+            self.pid_window.show()
