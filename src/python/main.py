@@ -6,8 +6,6 @@ Stewart_0 = Stewart(0, port, baudrate)
 #Stewart_1 = Stewart(1, port, baudrate)
 
 
-
-
 print(Stewart_0.calibrate())
 
 Stewart_0.control()

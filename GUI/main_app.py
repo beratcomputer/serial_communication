@@ -12,7 +12,7 @@ class MainApp(QWidget):
     def __init__(self, device_list, port):
         super().__init__()
         self.device_list = device_list  # Cihaz listesi
-        self.one_device = Stewart(device_list[0], port, _test = False)
+        self.one_device = Stewart(device_list[0], port, _test = True)
 
         self.initUI()
 
@@ -32,11 +32,26 @@ class MainApp(QWidget):
         self.tabs.addTab(self.config_page, "Config")
         self.tabs.addTab(self.control_page, "Control")
 
+        self.control_page.timer.stop()  # Timer'ı durdur
+
+        # Tab değişim sinyaline fonksiyon bağlama
+        self.tabs.currentChanged.connect(self.on_tab_changed)
+        
+
         # Ana layout
         layout = QVBoxLayout()
         layout.addWidget(self.tabs)
 
         self.setLayout(layout)
+
+    def on_tab_changed(self, index):
+        """Sekme değiştiğinde çalışacak fonksiyon."""
+        if index == 1:  # Control sekmesi aktif
+            self.control_page.timer.start(10)  # Timer'ı başlat
+            print("Control tab active, timer started.")
+        else:  # Diğer sekmelerde
+            self.control_page.timer.stop()  # Timer'ı durdur
+            print("Control tab inactive, timer stopped.")
 
 
 

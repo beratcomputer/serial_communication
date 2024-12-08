@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, QLabel, QTableWidget, QTableWidgetItem,
     QLineEdit, QCheckBox, QGroupBox, QGridLayout, QTableWidgetItem
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 import sys
 import os
@@ -15,7 +15,17 @@ class ControlPage(QWidget):
     def __init__(self, stewart):
         super().__init__()
         self.stewart = stewart
+        self.periodically_get_values = [Index_Stewart.Motor1_Position,
+        Index_Stewart.Motor1_Position,
+        Index_Stewart.Motor3_Position,
+        Index_Stewart.Motor4_Position,
+        Index_Stewart.Motor5_Position,
+        Index_Stewart.Motor6_Position,
+        Index_Stewart.PresentPosition_Roll,
+        Index_Stewart.PresentPosition_Pitch,
+        Index_Stewart.PresentPosition_Yaw]
         self.initUI()
+        self.init_timer()
 
     def initUI(self):
         # Ana Layout
@@ -165,6 +175,12 @@ class ControlPage(QWidget):
 
         return slider_layout_dict
 
+    def init_timer(self):
+        """QTimer'ı başlatır ve her 10 ms'de bir veri güncelleme fonksiyonunu çağırır."""
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_tables)  # Timer ile bağlı fonksiyon
+        self.timer.start(10)  # 10 ms aralıkla çalışır
+
     def update_slider_value(self, slider_value, value):
         slider_value.setText(str(value))
 
@@ -175,6 +191,19 @@ class ControlPage(QWidget):
         except ValueError:
             slider_val.setText(str(slider.value()))
 
+    def update_tables(self):
+        """Motor ve IMU tablolarını günceller."""
+        # Cihazdan motor pozisyonlarını al
+        
+        self.stewart.read_var(*self.periodically_get_values)
+        motor_positions = [self.stewart._vars[i].value() for i in range(Index_Stewart.Motor1_Position, Index_Stewart.Motor6_Position)]
+        imu_values = [ self.stewart._vars[i].value() for i in range(Index_Stewart.PresentPosition_Roll,Index_Stewart.PresentPosition_Yaw)]
+        # write to the tables
+        for i, position in enumerate(motor_positions):
+            self.motor_table.setItem(0, i, QTableWidgetItem(f"{position:.2f}"))
+        for i, imu in enumerate(imu_values):
+            self.imu_table.setItem(0, i, QTableWidgetItem(f"{imu:.2f}"))
+
     def on_set_button_clicked(self):
         # Set button işlevi buraya eklenebilir
         x = float(self.slider_x["slider_value"].text())
@@ -183,6 +212,7 @@ class ControlPage(QWidget):
         roll = float(self.slider_roll["slider_value"].text())
         pitch = float(self.slider_pitch["slider_value"].text())
         yaw = float(self.slider_yaw["slider_value"].text())
+        print(x, y, z, roll, pitch, yaw)
         self.stewart.write_var([Index_Stewart.OperationMode, Stewart_ControlModes.InternalTrajectory])
         self.stewart.write_var([Index_Stewart.TargetCoordinate_X, x], [Index_Stewart.TargetCoordinate_Y, y], [Index_Stewart.TargetCoordinate_Z, z], [Index_Stewart.TargetRotation_Roll, roll], [Index_Stewart.TargetRotation_Pitch, pitch])
 

@@ -135,7 +135,7 @@ class Stewart(Acrome_Device):
 			Data_(Index_Stewart.MotorCPRs,'f'),
             Data_(Index_Stewart.DeviceLoopFrequency,'f'),
             Data_(Index_Stewart.OperationMode, 'I'),
-			Data_(Index_Stewart.TorqueEnable, 'I'),
+			Data_(Index_Stewart.TorqueEnable, 'B'),
             Data_(Index_Stewart.TargetCoordinate_X,'f'),
             Data_(Index_Stewart.TargetCoordinate_Y,'f'),
             Data_(Index_Stewart.TargetCoordinate_Z,'f'),
