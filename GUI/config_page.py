@@ -118,6 +118,9 @@ class ConfigPage(QWidget):
         self.connection_check_button.clicked.connect(self.connection_check)
         self.refresh_button.clicked.connect(self.refresh_all_data)
         self.calibrate_button.clicked.connect(self.calibrate)
+        self.reboot_button.clicked.connect(self.reboot)
+        self.eeprom_button.clicked.connect(self.eeprom_save)
+        self.factory_reset_button.clicked.connect(self.factory_reset)
 
         # Resim ve ayarlar kısmı
         image_and_settings_layout = QHBoxLayout()
@@ -151,6 +154,16 @@ class ConfigPage(QWidget):
             self.connection_indicator.setStyleSheet("background-color: green; border: 1px solid black;")
         else:
             self.connection_indicator.setStyleSheet("background-color: red; border: 1px solid black;")
+
+    def reboot(self):
+        self.stewart.reboot()
+
+    def eeprom_save(self):
+        self.stewart.eeprom_save()
+
+    def factory_reset(self):
+        #self.stewart.factory_reset()
+        pass
 
 
     def refresh_all_data(self):
