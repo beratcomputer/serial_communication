@@ -54,8 +54,8 @@ class StartupPage(QMainWindow):
         self.port_selector.addItem("Port Seçiniz")
         port_layout.addWidget(self.port_selector)
         self.populate_ports()
-        if self.port_selector.count() > 1:  # "Port Seçiniz" hariç başka seçenek varsa
-            self.port_selector.setCurrentIndex(1)  # İlk geçerli portu seç
+        if self.port_selector.count() >= 1:  # "Port Seçiniz" hariç başka seçenek varsa
+            self.port_selector.setCurrentIndex(0)  # İlk geçerli portu seç
             self.selected_port = self.port_selector.currentText()  # Seçilen portu ata
             print(f"Başlangıçta seçilen port: {self.selected_port}")
 

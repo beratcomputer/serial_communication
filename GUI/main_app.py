@@ -13,6 +13,7 @@ class MainApp(QWidget):
         super().__init__()
         self.device_list = device_list  # Cihaz listesi
         self.one_device = Stewart(device_list[0], port, _test = False)
+        print(port)
 
         self.initUI()
 
