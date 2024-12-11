@@ -105,6 +105,10 @@ class Acrome_Device():
         struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
         self._ack_size = 8
         #burayi kontrol et.
+        if self._test == True:
+            print(list(struct_out))
+            return True
+        
         self._write_bus(struct_out)
         
         if self._read_ack():
@@ -177,8 +181,8 @@ class Acrome_Device():
         fmt_str = '<BBBB'
         struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Device_Commands.EEPROM_WRITE]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-        print(struct_out)
-        print(CRC32.calc(struct_out))
+        #print(struct_out)
+        #print(CRC32.calc(struct_out))
         #burayi kontrol et.
         self._write_bus(struct_out)
         try:     
