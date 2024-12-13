@@ -5,6 +5,28 @@ import time
 import serial
 import enum
 
+class AcromeDevicesPort:
+    def __init__(self, port_name, baudrate=921600, timeout=0.1):
+        import serial
+        self.port_name = port_name
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.ph = serial.Serial(port=self.port_name, baudrate=self.baudrate, timeout=self.timeout)
+
+    def close_port(self):
+        if self.ph and self.ph.is_open:
+            self.ph.close()
+            print(f"Port '{self.port_name}' kapatıldı.")
+        else:
+            print(f"Port '{self.port_name}' zaten kapalı.")
+
+    def __del__(self):
+        try:
+            self.close_port()
+        except Exception as e:
+            print(f"AcromeDevicesPort yok edilirken bir hata oluştu: {e}")
+
+
 #Classical Device Indexes
 Index_Devices = enum.IntEnum('Index', [
 	'Header',
@@ -18,31 +40,24 @@ Index_Devices = enum.IntEnum('Index', [
 
 #Classical_Commands
 class Device_Commands(enum.IntEnum):
-	PING = 0x00,
-	READ = 0x01,
-	WRITE = 0x02,
-	REBOOT = 0x10,
-	EEPROM_WRITE = 0x20,
-	BL_JUMP = 0x30,
-	WRITE_SYNC = 0x40,
-	ACK = 0x80,
-	WRITE_ACK = 0x80 | 0x02
+    PING = 0x00,
+    READ = 0x01,
+    WRITE = 0x02,
+    REBOOT = 0x10,
+    EEPROM_WRITE = 0x20,
+    FACTORY_RESET = 0x25,
+    BL_JUMP = 0x30,
+    WRITE_SYNC = 0x40,
+    ACK = 0x80,
+    WRITE_ACK = 0x80 | 0x02
 
 
 class Acrome_Device():
     _BATCH_ID = 254
-    def __init__(self, header, id, variables, portname, baudrate=921600, _test = False):
+    def __init__(self, header, id, variables, port:AcromeDevicesPort, _test = False):
         self._test = _test
         if _test == False:
-            if baudrate > 9500000 or baudrate < 1200:
-                raise ValueError("Baudrate must be in range of 1200 to 9.5M")
-            else:
-                try:
-                    self.__baudrate = baudrate
-                    self.__post_sleep = 0
-                    self.__ph = serial.Serial(port=portname, baudrate=self.__baudrate, timeout=0.1)
-                except Exception as e:
-                    print(f"error: {e}")
+            self.__ph = port.ph
         self._header = header
         self._id = id
         self._vars = variables
@@ -181,9 +196,6 @@ class Acrome_Device():
         fmt_str = '<BBBB'
         struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Device_Commands.EEPROM_WRITE]))
         struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
-        #print(struct_out)
-        #print(CRC32.calc(struct_out))
-        #burayi kontrol et.
         self._write_bus(struct_out)
         try:     
             self._write_bus(struct_out)
@@ -191,6 +203,23 @@ class Acrome_Device():
                 return True
         except:
             print("port error.....")
+
+    def factory_reset(self, ack=False):
+        fmt_str = '<BBBB'            
+        struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Device_Commands.FACTORY_RESET]))
+        struct_out = bytes(struct_out) + struct.pack('<' + 'I', CRC32.calc(struct_out))
+        if self._test:
+            print(list(struct_out))
+            return
+        self._write_bus(struct_out)
+        if ack:
+            try:     
+                self._write_bus(struct_out)
+                if self._read_ack(id):
+                    return True
+            except:
+                return False
+
 
     def _bootloader_jump(self):
         pass

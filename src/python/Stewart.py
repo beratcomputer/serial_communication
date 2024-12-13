@@ -116,7 +116,7 @@ Index_Stewart = enum.IntEnum('Index', [
 
 
 class Stewart(Acrome_Device):
-	def __init__(self, ID, port, baudrate = 921600, _test = False) -> bool:
+	def __init__(self, ID, port:AcromeDevicesPort, _test = False) -> bool:
 		
 		self.__ack_size = 0
 		if ID > 255 or ID < 0:
@@ -145,7 +145,7 @@ class Stewart(Acrome_Device):
             Data_(Index_Stewart.Offset_X,'f'),
             Data_(Index_Stewart.Offset_Y,'f'),
             Data_(Index_Stewart.Offset_Z,'f'),
-            Data_(Index_Stewart.InternalTrajectory_SpeedSetting,'f'),
+            Data_(Index_Stewart.InternalTrajectory_SpeedSetting,'B'),
             Data_(Index_Stewart.InternalTrajectory_time,'f'),
 			Data_(Index_Stewart.Motor1_GoalPosition, 'f'),
 			Data_(Index_Stewart.Motor2_GoalPosition, 'f'),
@@ -215,7 +215,7 @@ class Stewart(Acrome_Device):
 			Data_(Index_Stewart.Motor6_CalibrationOutput,'f'),
             Data_(Index_Stewart.CRCValue, 'I'),
         ]
-		super().__init__(STEWART_HEADER, ID, Datas_Stewart, port, baudrate, _test)
+		super().__init__(STEWART_HEADER, ID, Datas_Stewart, port, _test)
 		self._vars[Index_Stewart.DeviceID].value(ID)
 
 	def get_classic_packet_0(self):
@@ -235,7 +235,6 @@ class Stewart(Acrome_Device):
 		else:
 			return False
 
-
 	def control(self):
 		fmt_str = '<BBBB'
 		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.CONTROL]))
@@ -243,6 +242,15 @@ class Stewart(Acrome_Device):
 		self._ack_size = 8
 		#burayi kontrol et.
 		self._write_bus(struct_out)
+
+	def idle(self):
+		fmt_str = '<BBBB'
+		struct_out = list(struct.pack(fmt_str, *[self._header, self._id, 8, Stewart_ExtraCommands.IDLE]))
+		struct_out = bytes(struct_out) + struct.pack('<I', CRC32.calc(struct_out))
+		self._ack_size = 8
+		#burayi kontrol et.
+		self._write_bus(struct_out)
+
 
 	def control_sync(self):
 		fmt_str = '<BBBB'

@@ -11,6 +11,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 's
 # subthree modülünü import et
 from acrome_embedded_devices import *
 
+motor_size_indexes = ['2 Inches', '4 Inches', '8 Inches', '12 Inches']
+z_limits = {0: [341,394], 1: [399, 497], 2: [500, 706], 3:[602,909]}
+
 class ControlPage(QWidget):
     def __init__(self, stewart):
         super().__init__()
@@ -35,10 +38,12 @@ class ControlPage(QWidget):
         left_layout = QVBoxLayout()
         self.sliders = []
         self.slider_values = []
+        
+        self.z_limits = z_limits[self.stewart._vars[Index_Stewart.MotorSizes].value()]
 
         self.slider_x = self.create_slider_layout('X axis', -200, 200, 0)
         self.slider_y = self.create_slider_layout('Y axis', -200, 200, 0)
-        self.slider_z = self.create_slider_layout('Z axis', 500, 800, 500)
+        self.slider_z = self.create_slider_layout('Z axis', self.z_limits[0], self.z_limits[1], self.z_limits[0])
         self.slider_roll = self.create_slider_layout('Roll angle', -40, 40, 0)
         self.slider_pitch = self.create_slider_layout('Pitch angle', -40, 40, 0)
         self.slider_yaw = self.create_slider_layout('Yaw angle', -40, 40, 0)
@@ -87,20 +92,36 @@ class ControlPage(QWidget):
         self.enable_button.toggled.connect(self.toggle_enable)
         speed_enable_layout.addWidget(self.enable_button)
 
-        # Speed slider
+        # Speed slider layout
+        speed_layout = QHBoxLayout()
+
+        # Speed label
         speed_label = QLabel("Speed:")
+        speed_label.setFixedWidth(50)  # Yazının genişliğini sabitle
+        speed_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)  # Yazıyı sağa hizala
+
+        # Speed slider
         self.speed_slider = QSlider(Qt.Horizontal)
         self.speed_slider.setMinimum(1)
         self.speed_slider.setMaximum(10)
         self.speed_slider.setValue(5)
         self.speed_slider.setTickPosition(QSlider.TicksBelow)
         self.speed_slider.setTickInterval(1)
-        self.speed_slider.valueChanged.connect(self.on_speed_slider_changed)  # Speed slider fonksiyonu
+        self.speed_slider.valueChanged.connect(self.on_speed_slider_changed)
 
-        speed_enable_layout.addWidget(speed_label)
-        speed_enable_layout.addWidget(self.speed_slider)
+        # Sabit slider genişliği
+        self.speed_slider.setFixedWidth(350)
+
+        # Layout içine ekleme
+        speed_layout.addWidget(speed_label)
+        speed_layout.addWidget(self.speed_slider)
+        speed_layout.addStretch()  # Kalan alanı eşit dağıt
+
+        # Ana layout'a ekleme
+        speed_enable_layout.addLayout(speed_layout)
 
         right_layout.addLayout(speed_enable_layout)
+        
 
         # Motor pozisyon tablosu
         motor_pos_group_box = QGroupBox("Motor Positions")
@@ -179,7 +200,7 @@ class ControlPage(QWidget):
         """QTimer'ı başlatır ve her 10 ms'de bir veri güncelleme fonksiyonunu çağırır."""
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_tables)  # Timer ile bağlı fonksiyon
-        self.timer.start(10)  # 10 ms aralıkla çalışır
+        self.timer.start(20)  # 10 ms aralıkla çalışır
 
     def update_slider_value(self, slider_value, value):
         slider_value.setText(str(value))
@@ -221,6 +242,7 @@ class ControlPage(QWidget):
 
     def on_speed_slider_changed(self):
         # Speed slider işlevi buraya eklenebilir
+        self.stewart.write_var([Index_Stewart.InternalTrajectory_SpeedSetting, int(self.speed_slider.value())])
         print(f"Speed slider value: {self.speed_slider.value()}")
 
     def toggle_enable(self,checked):

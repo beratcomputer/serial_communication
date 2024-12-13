@@ -1,8 +1,8 @@
 from acrome_embedded_devices import *
-port = "COM11"
+port_name = "COM11"
 baudrate = 921600 
-
-Stewart_0 = Stewart(0, port, baudrate)
+port = AcromeDevicesPort(port_name)
+Stewart_0 = Stewart(0, port)
 #Stewart_1 = Stewart(1, port, baudrate)
 
 

@@ -48,10 +48,12 @@ class MainApp(QWidget):
     def on_tab_changed(self, index):
         """Sekme değiştiğinde çalışacak fonksiyon."""
         if index == 1:  # Control sekmesi aktif
-            self.control_page.timer.start(10)  # Timer'ı başlat
+            self.control_page.timer.start(20)  # Timer'ı başlat
+            self.one_device.control()
             print("Control tab active, timer started.")
         else:  # Diğer sekmelerde
             self.control_page.timer.stop()  # Timer'ı durdur
+            self.one_device.idle()
             print("Control tab inactive, timer stopped.")
 
 

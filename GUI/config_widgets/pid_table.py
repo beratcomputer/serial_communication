@@ -136,9 +136,9 @@ class PID_Table(QWidget):
                     PID_data[i][j] = 0.0
         print("Current Table Data:", PID_data)
         
-        self.stewart.write_var([Index_Stewart.Motor1_P, p_data[0]],[Index_Stewart.Motor2_P, p_data[1]],[Index_Stewart.Motor3_P, p_data[2]],[Index_Stewart.Motor3_P, p_data[3]],[Index_Stewart.Motor3_P, p_data[4]],[Index_Stewart.Motor3_P, p_data[5]])
-        self.stewart.write_var([Index_Stewart.Motor1_I, i_data[0]],[Index_Stewart.Motor2_I, i_data[1]],[Index_Stewart.Motor3_I, i_data[2]],[Index_Stewart.Motor3_I, i_data[3]],[Index_Stewart.Motor3_I, i_data[4]],[Index_Stewart.Motor3_I, i_data[5]])
-        self.stewart.write_var([Index_Stewart.Motor1_D, d_data[0]],[Index_Stewart.Motor2_D, d_data[1]],[Index_Stewart.Motor3_D, d_data[2]],[Index_Stewart.Motor3_D, d_data[3]],[Index_Stewart.Motor3_D, d_data[4]],[Index_Stewart.Motor3_D, d_data[5]])
+        self.stewart.write_var([Index_Stewart.Motor1_P, p_data[0]],[Index_Stewart.Motor2_P, p_data[1]],[Index_Stewart.Motor3_P, p_data[2]],[Index_Stewart.Motor4_P, p_data[3]],[Index_Stewart.Motor5_P, p_data[4]],[Index_Stewart.Motor6_P, p_data[5]])
+        self.stewart.write_var([Index_Stewart.Motor1_I, i_data[0]],[Index_Stewart.Motor2_I, i_data[1]],[Index_Stewart.Motor3_I, i_data[2]],[Index_Stewart.Motor4_I, i_data[3]],[Index_Stewart.Motor5_I, i_data[4]],[Index_Stewart.Motor6_I, i_data[5]])
+        self.stewart.write_var([Index_Stewart.Motor1_D, d_data[0]],[Index_Stewart.Motor2_D, d_data[1]],[Index_Stewart.Motor3_D, d_data[2]],[Index_Stewart.Motor4_D, d_data[3]],[Index_Stewart.Motor5_D, d_data[4]],[Index_Stewart.Motor6_D, d_data[5]])
         self.stewart.write_var([Index_Stewart.Motor1_Gain, gain_data[0]],[Index_Stewart.Motor2_Gain, gain_data[1]],[Index_Stewart.Motor3_Gain, gain_data[2]],[Index_Stewart.Motor4_Gain, gain_data[3]],[Index_Stewart.Motor5_Gain, gain_data[4]],[Index_Stewart.Motor6_Gain, gain_data[5]])
         self.stewart.write_var([Index_Stewart.Motor1_Deadband, deadband_data[0]],[Index_Stewart.Motor2_Deadband, deadband_data[1]],[Index_Stewart.Motor3_Deadband, deadband_data[2]],[Index_Stewart.Motor4_Deadband, deadband_data[3]],[Index_Stewart.Motor5_Deadband, deadband_data[4]],[Index_Stewart.Motor6_Deadband, deadband_data[5]])
 

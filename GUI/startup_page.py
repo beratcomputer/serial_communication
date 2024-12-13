@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QHeaderView, QCheckBox, QLabel, QFrame, QMessageBox
 )
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QMovie
+from PyQt5.QtGui import QMovie, QPixmap
 from main_app import MainApp  # İkinci pencereyi içe aktar
 from serial.tools import list_ports
 
@@ -16,6 +16,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 's
 
 # subthree modülünü import et
 from acrome_embedded_devices import *
+
+global global_device_port
+
+
 
 class StartupPage(QMainWindow):
     """Başlangıç Penceresi."""
@@ -37,11 +41,42 @@ class StartupPage(QMainWindow):
         
         # Sol Panel (Görseller için alan)
         left_panel = QVBoxLayout()
-        left_placeholder = QLabel("Buraya Görseller Eklenebilir")
-        left_placeholder.setFrameStyle(QFrame.Box | QFrame.Plain)
-        left_placeholder.setAlignment(Qt.AlignCenter)
-        left_placeholder.setMinimumWidth(250)
-        left_panel.addWidget(left_placeholder)
+
+        # Logo ekleme
+        logo_label = QLabel()
+        pixmap = QPixmap("GUI/images/acrome_logo.png")  # Logo dosyasının yolunu buraya koyun
+        if pixmap.isNull():  # Eğer logo bulunamazsa placeholder ekleyin
+            pixmap = QPixmap(200, 200)
+            pixmap.fill(Qt.gray)
+        else:
+            pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio)
+        logo_label.setPixmap(pixmap)
+        logo_label.setAlignment(Qt.AlignCenter)
+        left_panel.addWidget(logo_label)
+
+        # Açıklama metni ekleme
+        description_label = QLabel(
+            "This is an interface program designed to control the Acrome Stewart device."
+        )
+        description_label.setAlignment(Qt.AlignCenter)
+        description_label.setWordWrap(True)  # Metni çok uzun olduğunda sar
+        description_label.setStyleSheet("font-size: 14px;")
+        left_panel.addWidget(description_label)
+
+        # Version bilgisi ekleme
+        version_label = QLabel("Version: 0.0.1 (Beta)")
+        version_label.setAlignment(Qt.AlignCenter)
+        version_label.setStyleSheet("font-size: 12px; color: gray;")
+        left_panel.addWidget(version_label)
+
+        # Yazar bilgisi ekleme
+        author_label = QLabel("by BeratComputer")
+        author_label.setAlignment(Qt.AlignCenter)
+        author_label.setStyleSheet("font-size: 12px; font-weight: bold;")
+        left_panel.addWidget(author_label)
+
+        
+
         main_layout.addLayout(left_panel)
         
         # Sağ Panel (Ana Fonksiyonlar)
@@ -79,12 +114,12 @@ class StartupPage(QMainWindow):
         # Tablo
         self.table = QTableWidget()
         self.table.setColumnCount(2)
-        self.table.setHorizontalHeaderLabels(["ID", "İsim"])
+        self.table.setHorizontalHeaderLabels(["ID", "Label (optional)"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         right_panel.addWidget(self.table)
         
         # Manuel ekleme kontrolü
-        self.manual_add_checkbox = QCheckBox("Manuel olarak eklemek istiyorum")
+        self.manual_add_checkbox = QCheckBox("Add Manually")
         self.manual_add_checkbox.stateChanged.connect(self.toggle_add_widgets)
         right_panel.addWidget(self.manual_add_checkbox)
         
@@ -116,8 +151,6 @@ class StartupPage(QMainWindow):
         self.start_button.clicked.connect(self.open_main_app)
         right_panel.addWidget(self.start_button)
 
-        print(self.selected_port)
-
     def on_port_selected(self, port):
         if port != "Port Seçiniz" and port != "Port Bulunamadı":  # Geçersiz seçimleri kontrol et
             self.selected_port = port
@@ -138,7 +171,7 @@ class StartupPage(QMainWindow):
             id_text = id_from_scan
             name_text = " "
         
-        if id_text:
+        if (id_text != None) and (id_text != ''):
             row_count = self.table.rowCount()
             self.table.insertRow(row_count)
             self.table.setItem(row_count, 0, QTableWidgetItem(str(id_text)))
@@ -149,16 +182,6 @@ class StartupPage(QMainWindow):
             self.name_input.clear()
         else:
             print("Lütfen ID ve İsim alanlarını doldurun!")
-    
-    def open_main_app(self):
-        if(self.device_list == []):
-            self.show_error_message("No device added!")
-            return
-        print(self.device_list)
-
-        self.main_app = MainApp(device_list=self.device_list, port=self.selected_port)  # İkinci pencereyi oluştur
-        self.main_app.show()       # İkinci pencereyi göster
-        self.close()               # Bu pencereyi kapat
 
     def populate_ports(self):
         """Kullanılabilir portları doldurur."""
@@ -171,10 +194,12 @@ class StartupPage(QMainWindow):
     
     def scan_ports(self):
         print("Scan butonuna basıldı, farklı bir işlev çağrılabilir.")
-        #scanned_list = scan_Stewarts(self.selected_port)
-        scanned_list = [0,1,3,56]
-        for id in scanned_list:
-            self.add_row(True, id)
+        port =  AcromeDevicesPort(self.selected_port)
+        scanned_list = scan_Stewarts(port)
+        print(scanned_list)
+        del port
+        for stewart_id in scanned_list:
+            self.add_row(True, stewart_id)
         
     def show_error_message(self, message):
         msg_box = QMessageBox()
@@ -184,6 +209,18 @@ class StartupPage(QMainWindow):
         msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()  # Mesaj kutusunu göster ve kullanıcı yanıtını bekle
+
+    def open_main_app(self):
+        if(self.device_list == []):
+            self.show_error_message("No device added!")
+            return
+        print(self.device_list)
+
+        global global_device_port 
+        global_device_port = AcromeDevicesPort(self.selected_port)
+        self.main_app = MainApp(device_list=self.device_list, port=global_device_port)  # İkinci pencereyi oluştur
+        self.main_app.show()       # İkinci pencereyi göster
+        self.close()               # Bu pencereyi kapat
 
 
 if __name__ == '__main__':

@@ -14,6 +14,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 's
 from acrome_embedded_devices import *
 
 
+motor_size_indexes = ['2 Inches', '4 Inches', '8 Inches', '12 Inches']
+        
+# Motor boyutuna gore kontrol limitlerini belirlemeyi unutma!
+
+
+
 class CustomLineEdit(QLineEdit):
     def __init__(self, table_name, row, col, stewart, parent=None):
         super().__init__(parent)
@@ -78,14 +84,6 @@ class ConfigPage(QWidget):
         self.toggle_pid_button.clicked.connect(self.toggle_pid_table)
         left_layout.addWidget(self.toggle_pid_button)
 
-        '''# PID table
-        self.pid_table = PID_Table(self.stewart)
-        left_layout.addWidget(self.pid_table)
-        self.toggle_pid_button = QPushButton("Toggle PID Table", self)
-        self.toggle_pid_button.clicked.connect(self.toggle_pid_table)
-        left_layout.addWidget(self.toggle_pid_button)
-        '''
-
         main_layout.addLayout(left_layout)
 
         # Sağ layout (Butonlar ve diğer bileşenler)
@@ -137,9 +135,12 @@ class ConfigPage(QWidget):
         settings_layout = QVBoxLayout()
         settings_layout.addWidget(QLabel('Config Setting'))
         self.combo_box = QComboBox(self)
-        self.combo_box.addItems(['Option 1', 'Option 2', 'Option 3', 'Option 4'])
+        self.combo_box.addItems(['2 Inches', '4 Inches', '8 Inches', '12 Inches'])
         settings_layout.addWidget(self.combo_box)
         image_and_settings_layout.addLayout(settings_layout)
+        initial_motor_size = motor_size_indexes[self.stewart._vars[Index_Stewart.MotorSizes].value()]
+        self.combo_box.setCurrentText(initial_motor_size)
+        self.combo_box.currentTextChanged.connect(self.motor_size_selection)
 
         right_layout.addLayout(image_and_settings_layout)
 
@@ -162,8 +163,7 @@ class ConfigPage(QWidget):
         self.stewart.eeprom_save()
 
     def factory_reset(self):
-        #self.stewart.factory_reset()
-        pass
+        self.stewart.factory_reset()
 
 
     def refresh_all_data(self):
@@ -242,3 +242,15 @@ class ConfigPage(QWidget):
             self.pid_window.hide()
         else:
             self.pid_window.show()
+
+    def motor_size_selection(self, selected_text):
+        print(f"Selected config: {selected_text}")
+        # Burada seçime göre istediğiniz işlemi yapabilirsiniz
+        if selected_text == "2 Inches":
+            self.stewart.write_var([Index_Stewart.MotorSizes, 0])
+        elif selected_text == "4 Inches":
+            self.stewart.write_var([Index_Stewart.MotorSizes, 1])
+        elif selected_text == "8 Inches":
+            self.stewart.write_var([Index_Stewart.MotorSizes, 2])
+        elif selected_text == "12 Inches":
+            self.stewart.write_var([Index_Stewart.MotorSizes, 3])
