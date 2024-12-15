@@ -86,7 +86,7 @@ class StartupPage(QMainWindow):
         # Port seçimi ve scan butonu
         port_layout = QHBoxLayout()
         self.port_selector = QComboBox()
-        self.port_selector.addItem("Port Seçiniz")
+        self.port_selector.addItem("Select a port")
         port_layout.addWidget(self.port_selector)
         self.populate_ports()
         if self.port_selector.count() >= 1:  # "Port Seçiniz" hariç başka seçenek varsa
@@ -190,10 +190,13 @@ class StartupPage(QMainWindow):
         for port in ports:
             self.port_selector.addItem(port.device)  # Port isimlerini ekle
         if not ports:
-            self.port_selector.addItem("Port Bulunamadı")  # Eğer port yoksa bir mesaj ekle
+            self.port_selector.addItem("No port found")  # Eğer port yoksa bir mesaj ekle
     
     def scan_ports(self):
         print("Scan butonuna basıldı, farklı bir işlev çağrılabilir.")
+        if self.selected_port == "No port found":
+            self.show_error_message("There is no port to scan!")
+            return
         port =  AcromeDevicesPort(self.selected_port)
         scanned_list = scan_Stewarts(port)
         print(scanned_list)
@@ -216,7 +219,10 @@ class StartupPage(QMainWindow):
             return
         print(self.device_list)
 
-        global global_device_port 
+        global global_device_port
+        if self.selected_port == "No port found":
+            self.show_error_message("There is no port to scan!")
+            return
         global_device_port = AcromeDevicesPort(self.selected_port)
         self.main_app = MainApp(device_list=self.device_list, port=global_device_port)  # İkinci pencereyi oluştur
         self.main_app.show()       # İkinci pencereyi göster
