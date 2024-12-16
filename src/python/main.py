@@ -1,12 +1,18 @@
 from acrome_embedded_devices import *
 port_name = "COM11"
-baudrate = 921600 
+baudrate = 921600
 port = AcromeDevicesPort(port_name)
 Stewart_0 = Stewart(0, port)
 #Stewart_1 = Stewart(1, port, baudrate)
 
+Stewart_0.control()
 
-print(Stewart_0.calibrate())
+while True:
+    print(Stewart_0.read_var(Index_Stewart.IMU_Pitch))
+    time.sleep(2)
+
+
+#print(Stewart_0.calibrate())
 
 Stewart_0.control()
 Stewart_0.write_var([Index_Stewart.OperationMode, Stewart_ControlModes.InternalTrajectory])
@@ -16,6 +22,10 @@ Stewart_0.write_var([Index_Stewart.Motor4_P, 6.0],[Index_Stewart.Motor5_P, 6.0],
 
 Stewart_0.write_var([Index_Stewart.Motor1_D, 1.0],[Index_Stewart.Motor2_D, 1.0],[Index_Stewart.Motor3_D, 1.0])
 Stewart_0.write_var([Index_Stewart.Motor4_D, 1.0],[Index_Stewart.Motor5_D, 1.0],[Index_Stewart.Motor6_D, 1.0])
+
+
+
+
 
 while True:
     xyz = [0,0,0]

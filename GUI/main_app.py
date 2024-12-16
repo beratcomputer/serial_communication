@@ -14,7 +14,7 @@ class MainApp(QWidget):
         self.device_list = device_list  # Cihaz listesi
         self.one_device = Stewart(device_list[0], port, _test = False)
         print(port)
-
+        self.one_device.idle()
         self.initUI()
 
     def initUI(self):

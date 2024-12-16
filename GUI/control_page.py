@@ -19,14 +19,14 @@ class ControlPage(QWidget):
         super().__init__()
         self.stewart = stewart
         self.periodically_get_values = [Index_Stewart.Motor1_Position,
-        Index_Stewart.Motor1_Position,
+        Index_Stewart.Motor2_Position,
         Index_Stewart.Motor3_Position,
         Index_Stewart.Motor4_Position,
         Index_Stewart.Motor5_Position,
         Index_Stewart.Motor6_Position,
-        Index_Stewart.PresentPosition_Roll,
-        Index_Stewart.PresentPosition_Pitch,
-        Index_Stewart.PresentPosition_Yaw]
+        Index_Stewart.IMU_Roll,
+        Index_Stewart.IMU_Pitch,
+        Index_Stewart.IMU_Yaw]
         self.initUI()
         self.init_timer()
 
@@ -137,7 +137,7 @@ class ControlPage(QWidget):
         right_layout.addWidget(motor_pos_group_box)
 
         # IMU tablosu
-        imu_group_box = QGroupBox("IMU Değerleri")
+        imu_group_box = QGroupBox("IMU")
         imu_layout = QVBoxLayout()
         self.imu_table = QTableWidget(1, 3)
         self.imu_table.setHorizontalHeaderLabels(["Roll", "Pitch", "Yaw"])
@@ -217,8 +217,8 @@ class ControlPage(QWidget):
         # Cihazdan motor pozisyonlarını al
         
         self.stewart.read_var(*self.periodically_get_values)
-        motor_positions = [self.stewart._vars[i].value() for i in range(Index_Stewart.Motor1_Position, Index_Stewart.Motor6_Position)]
-        imu_values = [ self.stewart._vars[i].value() for i in range(Index_Stewart.PresentPosition_Roll,Index_Stewart.PresentPosition_Yaw)]
+        motor_positions = [self.stewart._vars[i].value() for i in range(Index_Stewart.Motor1_Position, Index_Stewart.Motor6_Position + 1)]
+        imu_values = [ self.stewart._vars[i].value() for i in range(Index_Stewart.IMU_Roll, Index_Stewart.IMU_Yaw + 1)]
         # write to the tables
         for i, position in enumerate(motor_positions):
             self.motor_table.setItem(0, i, QTableWidgetItem(f"{position:.2f}"))

@@ -15,7 +15,7 @@ from acrome_embedded_devices import *
 
 
 motor_size_indexes = ['2 Inches', '4 Inches', '8 Inches', '12 Inches']
-        
+
 # Motor boyutuna gore kontrol limitlerini belirlemeyi unutma!
 
 

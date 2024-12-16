@@ -158,7 +158,6 @@ class StartupPage(QMainWindow):
         else:
             self.selected_port = None  # Geçersiz seçim durumunda değişkeni temizle
 
-    
     def toggle_add_widgets(self, state):
         self.add_widgets.setVisible(state == Qt.Checked)
     
