@@ -78,9 +78,9 @@ class ControlPage(QWidget):
         self.enable_button.setCheckable(True)  # Toggle için gerekli
         self.enable_button.setStyleSheet("""
             QPushButton {
-                background-color: red;
+                background-color: darkred;
                 color: white;
-                border: 2px solid darkred;
+                border: 2px solid black;
                 border-radius: 10px;
                 padding: 10px;
             }
