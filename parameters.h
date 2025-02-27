@@ -1,0 +1,13 @@
+typedef enum {
+    PARAMETER1 = 10,
+    PARAMETER2 = 11,
+    PARAMETER3 = 12,
+    PARAMETER4 = 13,
+    PARAMETER5 = 14,
+    PARAMETER6 = 15,
+    PARAMETER7 = 16,
+    PARAMETER8 = 17,
+    PARAMETER9 = 18,
+    PARAMETER10 = 19,
+    PARAMETER11 = 20,
+} ParameterEnum;
